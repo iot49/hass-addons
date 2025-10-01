@@ -56731,18 +56731,25 @@ async function renderFallback(filePane, path) {
 }
 class FileRenderer {
   constructor(filePane) {
+    this.currentFilePath = "";
     this.handleLinkClick = (event) => {
       const link = event.target;
       if (link && link.href) {
         const url = new URL(link.href);
-        if (url.pathname.startsWith("/files/api/file/")) {
-          event.preventDefault();
-          const state = {
-            filePath: url.pathname
-          };
-          window.history.pushState(state, "", window.location.pathname);
-          this.showFile(url.pathname);
+        let targetPath;
+        if (url.pathname.startsWith("/api/file/")) {
+          targetPath = url.pathname;
+        } else if (this.isRelativeMarkdownLink(link.href, link)) {
+          const originalHref = link.getAttribute("href") || "";
+          targetPath = this.resolveRelativePath(originalHref, this.currentFilePath);
+        } else {
+          return;
         }
+        event.preventDefault();
+        const fileDisplayPath = targetPath.replace("/api/file/", "");
+        const state = { filePath: targetPath };
+        window.history.pushState(state, "", `/files/${fileDisplayPath}`);
+        this.showFile(targetPath);
       }
     };
     this.filePane = filePane;
@@ -56754,8 +56761,10 @@ class FileRenderer {
     var _a2;
     if (!path) {
       this.filePane.innerHTML = "<p>No file selected</p>";
+      this.currentFilePath = "";
       return;
     }
+    this.currentFilePath = path;
     try {
       const fileName = path.split("/").pop() || "";
       const extension = ((_a2 = fileName.split(".").pop()) == null ? void 0 : _a2.toLowerCase()) || "";
@@ -56902,6 +56911,25 @@ class FileRenderer {
       childList: true,
       subtree: true
     });
+  }
+  isRelativeMarkdownLink(_href, link) {
+    const originalHref = link.getAttribute("href") || "";
+    return originalHref.endsWith(".md") && (originalHref.startsWith("./") || originalHref.startsWith("../") || !originalHref.includes("/") && !originalHref.startsWith("http"));
+  }
+  resolveRelativePath(relativePath, currentFilePath) {
+    const currentDir = currentFilePath.replace("/api/file/", "").split("/").slice(0, -1).join("/");
+    if (relativePath.startsWith("./")) {
+      const targetPath = relativePath.substring(2);
+      return currentDir ? `/api/file/${currentDir}/${targetPath}` : `/api/file/${targetPath}`;
+    } else if (relativePath.startsWith("../")) {
+      const upLevels = (relativePath.match(/\.\.\//g) || []).length;
+      const targetPath = relativePath.replace(/\.\.\//g, "");
+      const pathParts = currentDir.split("/").filter((part) => part.length > 0);
+      const newDir = pathParts.slice(0, Math.max(0, pathParts.length - upLevels)).join("/");
+      return newDir ? `/api/file/${newDir}/${targetPath}` : `/api/file/${targetPath}`;
+    } else {
+      return currentDir ? `/api/file/${currentDir}/${relativePath}` : `/api/file/${relativePath}`;
+    }
   }
 }
 function iconForFilename(fileName) {
