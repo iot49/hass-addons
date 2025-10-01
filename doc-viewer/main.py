@@ -1,19 +1,24 @@
-import markdown
-import textwrap
 import os
+import textwrap
 from fnmatch import fnmatch
 from typing import List
 
-from fastapi import FastAPI, HTTPException, Request, status
+import markdown
+from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, DirectoryPath, Field
 
-DOCS_ROOT = "/config/docs"
+# Check for container environment first, then fall back to local development
+if os.path.exists("/config/docs"):
+    DOCS_ROOT = "/config/docs"
+else:
+    DOCS_ROOT = "/Users/boser/Documents/personal"
 
 # excludes (may use * and ? wildcards)
 EXCLUDE_FILES = [".DS_Store"]
 EXCLUDE_FOLDERS = ["__pycache__", ".venv", ".git", ".*cache", "$RECYCLE.BIN"]
+
 
 def dedent_and_convert_to_html(md_string: str) -> str:
     """
@@ -22,11 +27,12 @@ def dedent_and_convert_to_html(md_string: str) -> str:
     return markdown.markdown(textwrap.dedent(md_string))
 
 
-# set working directory to documents location (only in Docker container)
+# set working directory to documents location
 if os.path.exists(DOCS_ROOT):
     os.chdir(DOCS_ROOT)
+    print(f"Using documents directory: {DOCS_ROOT}")
 else:
-    # For local development, use a test directory or current directory
+    # Fallback to current directory if neither path exists
     print(
         f"Documents directory {DOCS_ROOT} not found, using current directory for development"
     )
@@ -55,7 +61,8 @@ class FolderModel(BaseModel):
     """Model representing a folder structure with files and subfolders"""
 
     path: DirectoryPath = Field(
-        description=f"Path relative to {DOCS_ROOT} root directory", example="admin/reports"
+        description=f"Path relative to {DOCS_ROOT} root directory",
+        example="admin/reports",
     )
     folders: List[str] = Field(
         description="Names of accessible sub-folders within this path",
@@ -73,12 +80,14 @@ class FolderModel(BaseModel):
         """Get the display name of this folder"""
         return os.path.normpath(self.path).split(os.sep)[-1]
 
+
 class HealthResponse(BaseModel):
     """Health check response model"""
 
     status: str = Field(
         description="Service health status", example="Docs service is healthy"
     )
+
 
 class ErrorResponse(BaseModel):
     """Error response model"""
@@ -96,14 +105,23 @@ app = FastAPI(
     version="1.0.0",
 )
 
-# Mount static files for the UI
-app.mount("/ui", StaticFiles(directory="/html/ux"), name="static")
+# Mount static files for the UI - check for container vs local development
+if os.path.exists("/html/ux"):
+    UI_DIR = "/html/ux"
+else:
+    # For local development, use absolute path to the built UI
+
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    UI_DIR = os.path.join(script_dir, "html", "ux")
+
+app.mount("/ui", StaticFiles(directory=UI_DIR), name="static")
+
 
 # Serve the main UI at root
 @app.get("/")
 async def read_root():
     """Serve the main UI application"""
-    return FileResponse("/html/ux/index.html")
+    return FileResponse(f"{UI_DIR}/index.html")
 
 
 @app.get(
@@ -184,7 +202,7 @@ async def get_folder(path: str) -> FolderModel:
         return FolderModel(
             path=normalized_path, folders=sorted(folders), files=sorted(files)
         )
-    except (OSError) as e:
+    except OSError as e:
         raise HTTPException(status_code=404, detail=f"Not found: {str(e)}")
 
 
