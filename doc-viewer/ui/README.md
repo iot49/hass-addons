@@ -1,13 +1,6 @@
-# Doc UI
+# Doc Viewer UI
 
-This is the frontend UI for the doc application, built with Vite, Lit Element, and TypeScript.
-
-## Features
-
-- Built with Lit Element for web components
-- TypeScript for type safety
-- Vite for fast development and optimized builds
-- Responsive design for mobile and desktop
+This is the frontend UI for the doc viewer application, built with Vite, Lit Element, and TypeScript.
 
 ## Getting Started
 
@@ -45,15 +38,3 @@ Preview the production build:
 ```bash
 npm run preview
 ```
-
-## Project Structure
-
-- `src/` - Source code
-  - `my-element.ts` - Main Lit Element component
-  - `main.ts` - Entry point
-- `public/` - Static assets
-- `index.html` - HTML entry point
-
-## License
-
-This project is part of the doc Web application.
