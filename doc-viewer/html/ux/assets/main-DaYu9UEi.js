@@ -59129,7 +59129,9 @@ let PwFilesBrowser = class extends i$3 {
     return x`
       <sl-split-panel position-in-pixels="250">
         <div id="treePane" slot="start">
-          ${this.root == null ? x`Loading ... <sl-spinner></sl-spinner>` : x` ${this.treeTemplate(this.root)}`}
+          <div id="treeContainer">
+            ${this.root == null ? x`Loading ... <sl-spinner></sl-spinner>` : x` ${this.treeTemplate(this.root)}`}
+          </div>
           <div id="uploadSection">
             <sl-button id="uploadButton" variant="primary" @click=${this.handleUploadClick}>
               <sl-icon slot="prefix" name="upload"></sl-icon>
@@ -59209,7 +59211,16 @@ PwFilesBrowser.styles = i$6`
     }
 
     #treePane {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    #treeContainer {
+      flex: 1;
       overflow: auto;
+      min-height: 0;
     }
 
     #filePane {
@@ -59275,6 +59286,7 @@ PwFilesBrowser.styles = i$6`
       padding: 1rem;
       border-top: 1px solid var(--sl-color-neutral-300);
       background-color: var(--sl-color-neutral-50);
+      flex-shrink: 0;
     }
 
     #uploadButton {
