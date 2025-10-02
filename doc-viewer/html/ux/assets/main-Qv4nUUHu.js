@@ -59004,7 +59004,7 @@ let PwFilesBrowser = class extends i$3 {
     if (this.selectedFilePath) {
       this.fileRenderer.showFile(this.selectedFilePath);
     }
-    this.treePane.addEventListener("sl-lazy-load", async (event) => {
+    this.treeContainer.addEventListener("sl-lazy-load", async (event) => {
       const target = event.target;
       const path = target.getAttribute("data-path");
       const name = target.getAttribute("data-folder");
@@ -59210,6 +59210,22 @@ PwFilesBrowser.styles = i$6`
       height: 100vh;
     }
 
+    sl-split-panel::part(divider) {
+      background-color: var(--sl-color-neutral-300);
+    }
+
+    sl-split-panel [slot="start"] {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    sl-split-panel [slot="end"] {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+
     #treePane {
       display: flex;
       flex-direction: column;
@@ -59350,6 +59366,9 @@ __decorateClass([
 __decorateClass([
   e$3("#treePane")
 ], PwFilesBrowser.prototype, "treePane", 2);
+__decorateClass([
+  e$3("#treeContainer")
+], PwFilesBrowser.prototype, "treeContainer", 2);
 __decorateClass([
   e$3("#fileContent")
 ], PwFilesBrowser.prototype, "fileContent", 2);
