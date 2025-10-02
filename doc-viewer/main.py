@@ -7,7 +7,7 @@ from fnmatch import fnmatch
 from typing import List
 
 import markdown
-from fastapi import FastAPI, File, Form, HTTPException, UploadFile
+from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, DirectoryPath, Field
@@ -156,14 +156,14 @@ async def read_root():
     ),
     tags=["Health"],
 )
-async def health_check() -> HealthResponse:
+async def health_check(request: Request) -> HealthResponse:
     """
     Perform a basic health check of the document service.
 
     Returns:
         HealthResponse: Service health status
     """
-    return HealthResponse(status="Docs-addon is healthy")
+    return HealthResponse(status=f"Docs-addon is healthy, headers: {request.headers}")
 
 
 @app.get(

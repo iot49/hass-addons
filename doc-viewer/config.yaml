@@ -1,7 +1,7 @@
 name: "Doc Viewer"
 description: >-
   Serve documentation in /config/docs.
-version: "1.8.4"
+version: "1.8.6"
 slug: "doc-viewer"
 init: false
 arch:
@@ -17,10 +17,10 @@ map:
   - type: homeassistant_config
     read_only: False
     path: /config
-# webui: "http://[HOST]:[PORT:8000]"
-# ports:
-#   8000/tcp: 8000
-# auth_api: true
+webui: "http://[HOST]:[PORT:8000]"
+ports:
+  8000/tcp: 8000
+auth_api: true
 
-ingress: true
-ingress_port: 8000
+# ingress: true
+# ingress_port: 8000
