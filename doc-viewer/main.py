@@ -31,14 +31,11 @@ def dedent_and_convert_to_html(md_string: str) -> str:
 
 
 # set working directory to documents location
-if os.path.exists(DOCS_ROOT):
+try:
+    os.makedirs(DOCS_ROOT, exist_ok=True)
     os.chdir(DOCS_ROOT)
-    print(f"Using documents directory: {DOCS_ROOT}")
-else:
-    # Fallback to current directory if neither path exists
-    print(
-        f"Documents directory {DOCS_ROOT} not found, using current directory for development"
-    )
+except Exception as e:
+    print(f"Error accessing documents directory {DOCS_ROOT}: {e}")
 
 
 def is_folder_empty(folder_path: str) -> bool:
@@ -311,8 +308,6 @@ async def upload_files(
         HTTPException: 400 if upload fails
     """
 
-    print(f"Uploading to target path: {target_path or 'root'}")
-
     if not files:
         raise HTTPException(status_code=400, detail="No files provided")
 
@@ -321,7 +316,6 @@ async def upload_files(
         try:
             # Save uploaded files to temporary directory, preserving folder structure
             for file in files:
-                print(f"Processing uploaded file: {file.filename}")
                 if file.filename:
                     file_path = os.path.join(temp_dir, file.filename)
                     file_dir = os.path.dirname(file_path)

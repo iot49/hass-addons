@@ -402,13 +402,6 @@ export class PwFilesBrowser extends LitElement {
     }
   }
 
-  private handleUploadCancel() {
-    this.uploadDialog.hide();
-    this.folderInput.value = '';
-    this.uploadStatus = '';
-    this.uploadStatusType = '';
-  }
-
   private handleUploadClose() {
     this.uploadDialog.hide();
     this.folderInput.value = '';
@@ -473,7 +466,7 @@ export class PwFilesBrowser extends LitElement {
           ${this.uploadStatusType === 'success' || this.uploadStatusType === 'error' ? html`
             <sl-button variant="primary" @click=${this.handleUploadClose}>Close</sl-button>
           ` : html`
-            <sl-button variant="default" @click=${this.handleUploadCancel}>Cancel</sl-button>
+            <sl-button variant="default" @click=${this.handleUploadClose}>Cancel</sl-button>
             <sl-button
               variant="primary"
               @click=${this.handleUploadSubmit}
