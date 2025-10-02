@@ -1,7 +1,9 @@
 import logging
 import os
+from urllib.parse import urlparse
 
 from fastapi import FastAPI, Request
+from fastapi.responses import FileResponse
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -28,28 +30,18 @@ app = FastAPI(
 )
 
 
+# Serve the main UI at root
+@app.get("/file")
+async def read_root():
+    """Serve the main UI application"""
+    return FileResponse(f"{UI_DIR}/index.html")
+
+
 @app.get("/{full_path:path}")
 async def catch_all_get(request: Request, full_path: str):
-    """
-    logger.error("DIAGNOSTIC: GET route handler called")
-    # full_path = request.base_url
-    logger.info(f"1 --------------------- full_path: {full_path}")
-    logger.error(f"2 --------------------- full_path: {full_path}")
-    print(f"3 --------------------- full_path: {full_path}")
-    logger.error(f"request.url: {request.url}")
-    logger.error(f"request.scope: {request.scope}")
-    logger.error(f"request.headers: {request.headers}")
-
-    # Extract the referer header
-    referer = request.headers.get("referer", "No referer header found")
-    logger.error(f"DIAGNOSTIC: Extracted referer: {referer}")
-
-    # DIAGNOSTIC: Log what type of response we're about to return
-    logger.error("DIAGNOSTIC: About to return HTML response")
-
-    html_content = f"<html><body><p>Fast API catch_all full_path = '{full_path}' referer = '{referer}' url = {request.url}</p></body></html>"
-    logger.error(f"DIAGNOSTIC: HTML content length: {len(html_content)}")
-
-    return HTMLResponse(content=html_content)
-    """
-    return request.headers.get("referer", "No referer header found")
+    # e.g. https://bv.leaf49.org/hassio/ingress/c5db6b11_ingress-fastapi?hello=12345
+    referer = request.headers.get("referer", "")
+    parsed = urlparse(referer)
+    query = parsed.query
+    path = parsed.path
+    return f"path={path}, query={query}, full_path={full_path}"
