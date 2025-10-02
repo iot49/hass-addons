@@ -392,6 +392,9 @@ export class PwFilesBrowser extends LitElement {
             this.currentUploadingFile = fileNames[fileIndex % fileNames.length];
             fileIndex++;
           }
+        } else {
+          // After cycling through files, show finalizing message
+          this.currentUploadingFile = 'Finalizing upload...';
         }
       }, 200);
 
