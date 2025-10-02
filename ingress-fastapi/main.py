@@ -42,7 +42,7 @@ async def catch_all_get(request: Request, full_path: str):
     logger.error(f"request.url: {request.url}")
     logger.error(f"request.scope: {request.scope}")
     logger.error(f"request.headers: {request.headers}")
-    return f"<html><body><p>Fast API catch_all full_path = {full_path} url = {request.url}</p></body></html>"
+    return f"<html><body><p>Fast API catch_all full_path = '{full_path}' url = {request.url}</p></body></html>"
 
 
 # DIAGNOSTIC: Also add a catch-all for other methods
@@ -54,4 +54,4 @@ async def catch_all_methods(request: Request, full_path: str):
     logger.error(f"request.url: {request.url}")
     logger.error(f"request.scope: {request.scope}")
     logger.error(f"request.headers: {request.headers}")
-    return f"<html><body><p>Fast API catch_all {request.method} {full_path}</p></body></html>"
+    return f"<html><body><p>Fast API catch_all '{request.method}' '{full_path}'</p></body></html>"

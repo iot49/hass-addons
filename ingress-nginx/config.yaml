@@ -1,5 +1,5 @@
 name: "Ingress Example"
-version: "1.0.1"
+version: "1.0.2"
 slug: "nginx-ingress-example"
 description: "Ingress testing"
 arch:
