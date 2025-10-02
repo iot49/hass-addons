@@ -58960,6 +58960,7 @@ let PwFilesBrowser = class extends i$3 {
     this.isUploading = false;
     this.uploadStatus = "";
     this.uploadStatusType = "";
+    this.currentUploadingFile = "";
     this.handleFilePathEvent = (event) => {
       const customEvent = event;
       this.currentFilePath = customEvent.detail.path;
@@ -59084,11 +59085,18 @@ let PwFilesBrowser = class extends i$3 {
     this.uploadProgress = 0;
     this.uploadStatus = "";
     this.uploadStatusType = "";
+    this.currentUploadingFile = "";
     this.uploadProgressEl.style.display = "block";
     try {
+      let fileIndex = 0;
+      const fileNames = Array.from(files).map((f2) => f2.name);
       const progressInterval = setInterval(() => {
         if (this.uploadProgress < 90) {
           this.uploadProgress += 10;
+          if (fileNames.length > 0) {
+            this.currentUploadingFile = fileNames[fileIndex % fileNames.length];
+            fileIndex++;
+          }
         }
       }, 200);
       const result = await upload_files(files, "");
@@ -59114,6 +59122,7 @@ let PwFilesBrowser = class extends i$3 {
       setTimeout(() => {
         this.uploadProgressEl.style.display = "none";
         this.uploadProgress = 0;
+        this.currentUploadingFile = "";
       }, 2e3);
     }
   }
@@ -59123,6 +59132,7 @@ let PwFilesBrowser = class extends i$3 {
     this.uploadStatus = "";
     this.uploadStatusType = "";
     this.uploadProgress = 0;
+    this.currentUploadingFile = "";
     this.uploadProgressEl.style.display = "none";
   }
   render() {
@@ -59164,6 +59174,10 @@ let PwFilesBrowser = class extends i$3 {
             value=${this.uploadProgress}
             style="display: none;"
           ></sl-progress-bar>
+
+          <div id="currentFileDisplay">
+            ${this.currentUploadingFile ? `Processing: ${this.currentUploadingFile}` : ""}
+          </div>
 
           ${this.uploadStatus ? x`
             <div class="upload-status ${this.uploadStatusType}">
@@ -59318,6 +59332,14 @@ PwFilesBrowser.styles = i$6`
       display: none;
     }
 
+    #currentFileDisplay {
+      margin-top: 0.5rem;
+      font-size: 0.875rem;
+      color: var(--sl-color-neutral-600);
+      text-align: center;
+      min-height: 1.2rem;
+    }
+
     #fileInput {
       margin-bottom: 1rem;
     }
@@ -59363,6 +59385,9 @@ __decorateClass([
 __decorateClass([
   r()
 ], PwFilesBrowser.prototype, "uploadStatusType", 2);
+__decorateClass([
+  r()
+], PwFilesBrowser.prototype, "currentUploadingFile", 2);
 __decorateClass([
   e$3("#treePane")
 ], PwFilesBrowser.prototype, "treePane", 2);
