@@ -1,5 +1,5 @@
 name: "Ingress Example"
-version: "1.0.3"
+version: "1.0.4"
 slug: "nginx-ingress-example"
 description: "Ingress testing"
 arch:
@@ -17,4 +17,4 @@ map:
     read_only: False
     path: /config
 
-# startup: services
+startup: services
