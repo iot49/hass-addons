@@ -59076,34 +59076,40 @@ let PwFilesBrowser = class extends i$3 {
   }
   async handleUploadSubmit() {
     const files = this.fileInput.files;
-    if (!files || files.length === 0) {
-      this.uploadStatus = "Please select files to upload";
+    const folderFiles = this.folderInput.files;
+    let allFiles = [];
+    if (files && files.length > 0) {
+      allFiles = allFiles.concat(Array.from(files));
+    }
+    if (folderFiles && folderFiles.length > 0) {
+      allFiles = allFiles.concat(Array.from(folderFiles));
+    }
+    if (allFiles.length === 0) {
+      this.uploadStatus = "Please select files or folders to upload";
       this.uploadStatusType = "error";
       return;
     }
     this.isUploading = true;
     this.uploadProgress = 0;
-    this.uploadStatus = "";
+    this.uploadStatus = "Upload in progress, this may take some time...";
     this.uploadStatusType = "";
     this.currentUploadingFile = "";
     this.uploadProgressEl.style.display = "block";
     try {
-      let fileIndex = 0;
-      const fileNames = Array.from(files).map((f2) => f2.name);
-      const progressInterval = setInterval(() => {
-        if (this.uploadProgress < 90) {
-          this.uploadProgress += 10;
-          if (fileNames.length > 0) {
-            this.currentUploadingFile = fileNames[fileIndex % fileNames.length];
-            fileIndex++;
+      const fileList = {
+        length: allFiles.length,
+        item: (index) => allFiles[index],
+        [Symbol.iterator]: function* () {
+          for (let i4 = 0; i4 < allFiles.length; i4++) {
+            yield allFiles[i4];
           }
-        } else {
-          this.currentUploadingFile = "Finalizing upload...";
         }
-      }, 200);
-      const result = await upload_files(files, "");
-      clearInterval(progressInterval);
-      this.uploadProgress = 100;
+      };
+      Object.setPrototypeOf(fileList, FileList.prototype);
+      for (let i4 = 0; i4 < allFiles.length; i4++) {
+        fileList[i4] = allFiles[i4];
+      }
+      const result = await upload_files(fileList, "");
       if (result) {
         this.uploadStatus = result.message;
         this.uploadStatusType = "success";
@@ -59111,13 +59117,9 @@ let PwFilesBrowser = class extends i$3 {
           const rj = await get_json("/api/folder/");
           this.root = new FolderModel(rj.path, rj.folders, rj.files);
           this.requestUpdate();
-          await this.updateComplete;
-          this.uploadDialog.hide();
-          this.fileInput.value = "";
-          this.uploadStatus = "";
-          this.uploadStatusType = "";
         } catch (refreshError) {
           console.error("Error refreshing file tree:", refreshError);
+          this.uploadStatus += " (Warning: Failed to refresh file tree)";
         }
       } else {
         this.uploadStatus = "Upload failed. Please try again.";
@@ -59128,16 +59130,24 @@ let PwFilesBrowser = class extends i$3 {
       this.uploadStatusType = "error";
     } finally {
       this.isUploading = false;
-      setTimeout(() => {
-        this.uploadProgressEl.style.display = "none";
-        this.uploadProgress = 0;
-        this.currentUploadingFile = "";
-      }, 2e3);
+      this.uploadProgress = 100;
+      this.uploadProgressEl.style.display = "none";
     }
   }
   handleUploadCancel() {
     this.uploadDialog.hide();
     this.fileInput.value = "";
+    this.folderInput.value = "";
+    this.uploadStatus = "";
+    this.uploadStatusType = "";
+    this.uploadProgress = 0;
+    this.currentUploadingFile = "";
+    this.uploadProgressEl.style.display = "none";
+  }
+  handleUploadClose() {
+    this.uploadDialog.hide();
+    this.fileInput.value = "";
+    this.folderInput.value = "";
     this.uploadStatus = "";
     this.uploadStatusType = "";
     this.uploadProgress = 0;
@@ -59170,13 +59180,27 @@ let PwFilesBrowser = class extends i$3 {
         <div>
           <p>Select files or folders to upload to the document repository. This will sync the files (copy new/changed files and remove files that don't exist in your selection).</p>
           
-          <input
-            id="fileInput"
-            type="file"
-            multiple
-            webkitdirectory
-            style="margin-bottom: 1rem;"
-          />
+          <div style="margin-bottom: 1rem;">
+            <label>
+              <input
+                id="fileInput"
+                type="file"
+                multiple
+                style="margin-right: 0.5rem;"
+              />
+              Select Files
+            </label>
+            <br/>
+            <label style="margin-top: 0.5rem; display: inline-block;">
+              <input
+                id="folderInput"
+                type="file"
+                webkitdirectory
+                style="margin-right: 0.5rem;"
+              />
+              Select Folder
+            </label>
+          </div>
           
           <sl-progress-bar
             id="uploadProgress"
@@ -59196,14 +59220,18 @@ let PwFilesBrowser = class extends i$3 {
         </div>
 
         <div slot="footer">
-          <sl-button variant="default" @click=${this.handleUploadCancel}>Cancel</sl-button>
-          <sl-button
-            variant="primary"
-            @click=${this.handleUploadSubmit}
-            ?disabled=${this.isUploading}
-          >
-            ${this.isUploading ? "Uploading..." : "Upload"}
-          </sl-button>
+          ${this.uploadStatusType === "success" || this.uploadStatusType === "error" ? x`
+            <sl-button variant="primary" @click=${this.handleUploadClose}>Close</sl-button>
+          ` : x`
+            <sl-button variant="default" @click=${this.handleUploadCancel}>Cancel</sl-button>
+            <sl-button
+              variant="primary"
+              @click=${this.handleUploadSubmit}
+              ?disabled=${this.isUploading}
+            >
+              ${this.isUploading ? "Uploading..." : "Upload"}
+            </sl-button>
+          `}
         </div>
       </sl-dialog>
     `;
@@ -59412,6 +59440,9 @@ __decorateClass([
 __decorateClass([
   e$3("#fileInput")
 ], PwFilesBrowser.prototype, "fileInput", 2);
+__decorateClass([
+  e$3("#folderInput")
+], PwFilesBrowser.prototype, "folderInput", 2);
 __decorateClass([
   e$3("#uploadProgress")
 ], PwFilesBrowser.prototype, "uploadProgressEl", 2);
