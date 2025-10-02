@@ -107,6 +107,7 @@ app = FastAPI(
     version="1.0.0",
 )
 
+
 # Configure MIME types for proper static file serving
 mimetypes.add_type("text/css", ".css")
 mimetypes.add_type("application/javascript", ".js")
@@ -120,7 +121,25 @@ else:
     script_dir = os.path.dirname(os.path.abspath(__file__))
     UI_DIR = os.path.join(script_dir, "html", "ux")
 
-app.mount("/ui", StaticFiles(directory=UI_DIR), name="static")
+
+# Custom static file handler for better MIME type handling
+class CustomStaticFiles(StaticFiles):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def file_response(self, *args, **kwargs):
+        response = super().file_response(*args, **kwargs)
+        # Ensure proper MIME types
+        if hasattr(response, "path"):
+            path = str(response.path)
+            if path.endswith(".css"):
+                response.headers["content-type"] = "text/css"
+            elif path.endswith(".js") or path.endswith(".mjs"):
+                response.headers["content-type"] = "application/javascript"
+        return response
+
+
+app.mount("/ui", CustomStaticFiles(directory=UI_DIR), name="static")
 
 
 # Serve the main UI at root
