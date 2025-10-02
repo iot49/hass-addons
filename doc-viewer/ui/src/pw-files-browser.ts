@@ -163,6 +163,14 @@ export class PwFilesBrowser extends LitElement {
       display: none;
     }
 
+    #currentFileDisplay {
+      margin-top: 0.5rem;
+      font-size: 0.875rem;
+      color: var(--sl-color-neutral-600);
+      text-align: center;
+      min-height: 1.2rem;
+    }
+
     #fileInput {
       margin-bottom: 1rem;
     }
@@ -195,6 +203,7 @@ export class PwFilesBrowser extends LitElement {
   @state() private isUploading = false;
   @state() private uploadStatus = '';
   @state() private uploadStatusType: 'success' | 'error' | '' = '';
+  @state() private currentUploadingFile = '';
   private fileRenderer!: FileRenderer;
 
   @query('#treePane') treePane!: HTMLDivElement;
@@ -367,13 +376,22 @@ export class PwFilesBrowser extends LitElement {
     this.uploadProgress = 0;
     this.uploadStatus = '';
     this.uploadStatusType = '';
+    this.currentUploadingFile = '';
     this.uploadProgressEl.style.display = 'block';
 
     try {
-      // Simulate progress for user feedback
+      // Simulate progress for user feedback with file name cycling
+      let fileIndex = 0;
+      const fileNames = Array.from(files).map(f => f.name);
+      
       const progressInterval = setInterval(() => {
         if (this.uploadProgress < 90) {
           this.uploadProgress += 10;
+          // Cycle through file names to show current processing
+          if (fileNames.length > 0) {
+            this.currentUploadingFile = fileNames[fileIndex % fileNames.length];
+            fileIndex++;
+          }
         }
       }, 200);
 
@@ -404,6 +422,7 @@ export class PwFilesBrowser extends LitElement {
       setTimeout(() => {
         this.uploadProgressEl.style.display = 'none';
         this.uploadProgress = 0;
+        this.currentUploadingFile = '';
       }, 2000);
     }
   }
@@ -414,6 +433,7 @@ export class PwFilesBrowser extends LitElement {
     this.uploadStatus = '';
     this.uploadStatusType = '';
     this.uploadProgress = 0;
+    this.currentUploadingFile = '';
     this.uploadProgressEl.style.display = 'none';
   }
 
@@ -458,6 +478,10 @@ export class PwFilesBrowser extends LitElement {
             value=${this.uploadProgress}
             style="display: none;"
           ></sl-progress-bar>
+
+          <div id="currentFileDisplay">
+            ${this.currentUploadingFile ? `Processing: ${this.currentUploadingFile}` : ''}
+          </div>
 
           ${this.uploadStatus ? html`
             <div class="upload-status ${this.uploadStatusType}">
