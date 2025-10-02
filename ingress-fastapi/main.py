@@ -2,6 +2,7 @@ import logging
 import os
 
 from fastapi import FastAPI, Request
+from fastapi.responses import HTMLResponse
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -38,4 +39,11 @@ async def catch_all_get(request: Request, full_path: str):
     logger.error(f"request.url: {request.url}")
     logger.error(f"request.scope: {request.scope}")
     logger.error(f"request.headers: {request.headers}")
-    return f"<html><body><p>Fast API catch_all query='{request.query_params}' full_path = '{full_path}' url = {request.url}</p></body></html>"
+
+    # DIAGNOSTIC: Log what type of response we're about to return
+    logger.error("DIAGNOSTIC: About to return HTML response")
+
+    html_content = f"<html><body><p>Fast API catch_all full_path = '{full_path}' referer='{request.referer}' headers = {request.headers} url = {request.url}</p></body></html>"
+    logger.error(f"DIAGNOSTIC: HTML content length: {len(html_content)}")
+
+    return HTMLResponse(content=html_content)
