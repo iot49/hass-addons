@@ -20,3 +20,6 @@ map:
   - type: homeassistant_config
     read_only: False
     path: /config
+# webui: "http://[HOST]:[PORT:8000]"
+# ports:
+#   8000/tcp: 8000
