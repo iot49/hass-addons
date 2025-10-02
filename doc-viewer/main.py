@@ -98,20 +98,12 @@ class ErrorResponse(BaseModel):
     )
 
 
-# Check if running under Home Assistant ingress
-ingress_path = os.environ.get("INGRESS_PATH", "")
-ingress_entry = os.environ.get("INGRESS_ENTRY", "")
-
-print(f"Ingress configuration - Path: {ingress_path}, Entry: {ingress_entry}")
-print(f"Environment variables: {dict(os.environ)}")
-
 app = FastAPI(
     title="Document Service",
     description=dedent_and_convert_to_html(
         """Render files in /config/docs via a REST API."""
     ),
     version="1.0.0",
-    root_path=ingress_path if ingress_path else None,
 )
 
 # Mount static files for the UI - check for container vs local development
@@ -131,15 +123,6 @@ app.mount("/ui", StaticFiles(directory=UI_DIR), name="static")
 async def read_root():
     """Serve the main UI application"""
     return FileResponse(f"{UI_DIR}/index.html")
-
-
-# Also serve UI at ingress root if ingress is enabled
-if ingress_path:
-
-    @app.get(f"{ingress_path}/")
-    async def read_ingress_root():
-        """Serve the main UI application at ingress path"""
-        return FileResponse(f"{UI_DIR}/index.html")
 
 
 @app.get(
