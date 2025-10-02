@@ -2,7 +2,6 @@ import logging
 import os
 
 from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -31,6 +30,7 @@ app = FastAPI(
 
 @app.get("/{full_path:path}")
 async def catch_all_get(request: Request, full_path: str):
+    """
     logger.error("DIAGNOSTIC: GET route handler called")
     # full_path = request.base_url
     logger.info(f"1 --------------------- full_path: {full_path}")
@@ -51,3 +51,5 @@ async def catch_all_get(request: Request, full_path: str):
     logger.error(f"DIAGNOSTIC: HTML content length: {len(html_content)}")
 
     return HTMLResponse(content=html_content)
+    """
+    return request.headers.get("referer", "No referer header found")
