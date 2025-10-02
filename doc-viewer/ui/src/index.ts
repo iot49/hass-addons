@@ -13,10 +13,3 @@ import './shoelace-config';
 // Import only the components we need
 import './pw-files-browser'
 
-/*
-// Create and append the files browser to the document body
-document.addEventListener('DOMContentLoaded', () => {
-  const filesBrowser = document.createElement('pw-files-browser');
-  document.body.appendChild(filesBrowser);
-});
-*/

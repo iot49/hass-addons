@@ -23,18 +23,12 @@ class FolderModel implements FolderModelInterface {
     this.files = files;
   }
 
-  /** Get the first part of the normalized path (realm) */
-  get realm(): string {
-    const normalizedPath = this.path.replace(/\\/g, '/').replace(/\/+/g, '/');
-    return normalizedPath.split('/')[0];
-  }
-
-  /** Get the last part of the normalized path (name) */
+  /** Get the last part of the normalized path (name) 
   get name(): string {
     const normalizedPath = this.path.replace(/\\/g, '/').replace(/\/+/g, '/');
     const parts = normalizedPath.split('/');
     return parts[parts.length - 1];
-  }
+  }*/
 }
 
 @customElement('pw-files-browser')
@@ -59,13 +53,13 @@ export class PwFilesBrowser extends LitElement {
       background-color: var(--sl-color-neutral-300);
     }
 
-    sl-split-panel [slot="start"] {
+    sl-split-panel [slot='start'] {
       height: 100%;
       display: flex;
       flex-direction: column;
     }
 
-    sl-split-panel [slot="end"] {
+    sl-split-panel [slot='end'] {
       height: 100%;
       display: flex;
       flex-direction: column;
@@ -193,7 +187,6 @@ export class PwFilesBrowser extends LitElement {
       color: var(--sl-color-danger-700);
       border: 1px solid var(--sl-color-danger-200);
     }
-
   `;
 
   @state() root!: FolderModel;
@@ -214,13 +207,13 @@ export class PwFilesBrowser extends LitElement {
     await super.connectedCallback();
     const rj = await get_json('/api/folder/');
     this.root = new FolderModel(rj.path, rj.folders, rj.files);
-    
+
     // Listen for pw-file-path events
     window.addEventListener('pw-file-path', this.handleFilePathEvent as EventListener);
-    
+
     // Listen for pageshow event to handle back/forward cache restoration
     window.addEventListener('pageshow', this.handlePageShow as EventListener);
-    
+
     // Listen for popstate events to handle back/forward navigation
     window.addEventListener('popstate', this.handlePopState as EventListener);
   }
@@ -242,9 +235,9 @@ export class PwFilesBrowser extends LitElement {
       persisted: event.persisted,
       currentPath: window.location.pathname,
       selectedFilePath: this.selectedFilePath,
-      hasFileRenderer: !!this.fileRenderer
+      hasFileRenderer: !!this.fileRenderer,
     });
-    
+
     // Handle back/forward cache restoration
     if (event.persisted && this.fileRenderer && this.currentFilePath) {
       console.log('Syncing file display after pageshow:', this.currentFilePath);
@@ -273,22 +266,22 @@ export class PwFilesBrowser extends LitElement {
       const target = event.target as SlTreeItem;
       const path = target.getAttribute('data-path');
       const name = target.getAttribute('data-folder');
-      
+
       try {
         // Construct the folder path properly - handle empty root path
         const folderPath = path && path !== '' ? `${path}/${name}` : name;
-        
+
         // For API calls, encode each path segment separately to avoid double-encoding
         const pathSegments = folderPath ? folderPath.split('/').map((segment: string) => encodeURIComponent(segment)) : [];
         const encodedApiPath = pathSegments.join('/');
         const folder = await get_json(`/api/folder/${encodedApiPath}`);
-        
+
         // Check if folder data is valid
         if (!folder || !folder.folders) {
           console.error('Invalid folder data received:', folder);
           return;
         }
-        
+
         for (const folderName of folder.folders) {
           const treeItem = document.createElement('sl-tree-item') as SlTreeItem;
           treeItem.innerText = folderName;
@@ -299,7 +292,7 @@ export class PwFilesBrowser extends LitElement {
           treeItem.setAttribute('data-folder', folderName);
           target.append(treeItem);
         }
-        
+
         for (const fileName of folder.files) {
           const treeItem = document.createElement('sl-tree-item') as SlTreeItem;
           // Construct the file path properly - encode each segment separately
@@ -308,7 +301,7 @@ export class PwFilesBrowser extends LitElement {
           const encodedFilePath = filePathSegments.join('/');
           const dataPath = `/api/file/${encodedFilePath}`;
           console.log(`pw-files-browser: adding file ${dataPath}`);
-          
+
           // Create icon element
           const icon = document.createElement('sl-icon');
           icon.setAttribute('name', iconForFilename(fileName));
@@ -325,7 +318,7 @@ export class PwFilesBrowser extends LitElement {
             if (path) {
               // Push state for browser history
               const state = {
-                filePath: path
+                filePath: path,
               };
               window.history.pushState(state, '', window.location.pathname);
               this.fileRenderer.showFile(path);
@@ -363,7 +356,7 @@ export class PwFilesBrowser extends LitElement {
 
   private async handleUploadSubmit() {
     const folderFiles = this.folderInput.files;
-    
+
     if (!folderFiles || folderFiles.length === 0) {
       this.uploadStatus = 'Please select a folder to upload';
       this.uploadStatusType = 'error';
@@ -380,7 +373,7 @@ export class PwFilesBrowser extends LitElement {
       if (result) {
         this.uploadStatus = result.message;
         this.uploadStatusType = 'success';
-        
+
         // Refresh the file tree after successful upload
         try {
           const rj = await get_json('/api/folder/');
@@ -413,9 +406,7 @@ export class PwFilesBrowser extends LitElement {
     return html`
       <sl-split-panel position-in-pixels="250">
         <div id="treePane" slot="start">
-          <div id="treeContainer">
-            ${this.root == null ? html`Loading ... <sl-spinner></sl-spinner>` : html` ${this.treeTemplate(this.root)}`}
-          </div>
+          <div id="treeContainer">${this.root == null ? html`Loading ... <sl-spinner></sl-spinner>` : html` ${this.treeTemplate(this.root)}`}</div>
           <div id="uploadSection">
             <sl-button id="uploadButton" variant="primary" @click=${this.handleUploadClick}>
               <sl-icon slot="prefix" name="upload"></sl-icon>
@@ -427,7 +418,9 @@ export class PwFilesBrowser extends LitElement {
           <div id="fileContent">Choose file to display ...</div>
           <div id="fileBottomBar">
             ${this.currentFilePath
-              ? html`<a href="${this.currentFilePath}" target="_blank" style="color: var(--sl-color-primary-600); text-decoration: none;">Click here to open the file in a new tab</a>`
+              ? html`<a href="${this.currentFilePath}" target="_blank" style="color: var(--sl-color-primary-600); text-decoration: none;"
+                  >Click here to open the file in a new tab</a
+                >`
               : 'Select a file to view'}
           </div>
         </div>
@@ -435,46 +428,36 @@ export class PwFilesBrowser extends LitElement {
 
       <sl-dialog id="uploadDialog" label="Upload Folder" class="dialog-overview">
         <div>
-          <p>Select a folder to upload to the document repository. This will completely replace the existing content with the uploaded folder.</p>
-          
+          <p>
+            Select a folder to upload to the document repository. This will completely replace existing content with the same name 
+            with the uploaded folder.
+          </p>
+
           <div style="margin-bottom: 1rem;">
             <label>
-              <input
-                id="folderInput"
-                type="file"
-                webkitdirectory
-                style="margin-right: 0.5rem;"
-              />
-              Select Folder
+              <input id="folderInput" type="file" webkitdirectory style="margin-right: 0.5rem;" />
             </label>
           </div>
-          
-          ${this.isUploading ? html`
-            <div style="text-align: center; margin: 1rem 0;">
-              <sl-spinner style="font-size: 2rem;"></sl-spinner>
-            </div>
-          ` : ''}
 
-          ${this.uploadStatus ? html`
-            <div class="upload-status ${this.uploadStatusType}">
-              ${this.uploadStatus}
-            </div>
-          ` : ''}
+          ${this.isUploading
+            ? html`
+                <div style="text-align: center; margin: 1rem 0;">
+                  <sl-spinner style="font-size: 2rem;"></sl-spinner>
+                </div>
+              `
+            : ''}
+          ${this.uploadStatus ? html` <div class="upload-status ${this.uploadStatusType}">${this.uploadStatus}</div> ` : ''}
         </div>
 
         <div slot="footer">
-          ${this.uploadStatusType === 'success' || this.uploadStatusType === 'error' ? html`
-            <sl-button variant="primary" @click=${this.handleUploadClose}>Close</sl-button>
-          ` : html`
-            <sl-button variant="default" @click=${this.handleUploadClose}>Cancel</sl-button>
-            <sl-button
-              variant="primary"
-              @click=${this.handleUploadSubmit}
-              ?disabled=${this.isUploading}
-            >
-              ${this.isUploading ? 'Uploading...' : 'Upload'}
-            </sl-button>
-          `}
+          ${this.uploadStatusType === 'success' || this.uploadStatusType === 'error'
+            ? html` <sl-button variant="primary" @click=${this.handleUploadClose}>Close</sl-button> `
+            : html`
+                <sl-button variant="default" @click=${this.handleUploadClose}>Cancel</sl-button>
+                <sl-button variant="primary" @click=${this.handleUploadSubmit} ?disabled=${this.isUploading}>
+                  ${this.isUploading ? 'Uploading...' : 'Upload'}
+                </sl-button>
+              `}
         </div>
       </sl-dialog>
     `;
@@ -483,7 +466,7 @@ export class PwFilesBrowser extends LitElement {
   private treeTemplate(folder: FolderModel) {
     // Normalize the root path - remove leading dots and slashes
     const normalizedPath = folder.path === '.' || folder.path === './' ? '' : folder.path;
-    
+
     return html` <sl-tree>
       ${folder.folders.map(
         (folderName: string) =>
