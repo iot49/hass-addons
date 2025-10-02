@@ -32,17 +32,17 @@ app = FastAPI(
 logger.error("DIAGNOSTIC: Setting up route handlers")
 
 
-@app.get("/")
-async def catch_all_get(request: Request):
+@app.get("/{full_path:path}")
+async def catch_all_get(request: Request, full_path: str):
     logger.error("DIAGNOSTIC: GET route handler called")
-    full_path = request.base_url
+    # full_path = request.base_url
     logger.info(f"1 --------------------- full_path: {full_path}")
     logger.error(f"2 --------------------- full_path: {full_path}")
     print(f"3 --------------------- full_path: {full_path}")
     logger.error(f"request.url: {request.url}")
     logger.error(f"request.scope: {request.scope}")
     logger.error(f"request.headers: {request.headers}")
-    return f"<html><body><p>Fast API catch_all {full_path}</p></body></html>"
+    return f"<html><body><p>Fast API catch_all full_path = {full_path} url = {request.url}</p></body></html>"
 
 
 # DIAGNOSTIC: Also add a catch-all for other methods
