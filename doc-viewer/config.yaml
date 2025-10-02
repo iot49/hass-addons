@@ -1,7 +1,7 @@
 name: "Doc Viewer"
 description: >-
   Serve documentation in /config/docs.
-version: "1.7.13"
+version: "1.7.14"
 slug: "doc-viewer"
 init: false
 arch:
@@ -14,7 +14,7 @@ startup: services
 ports:
   8000/tcp: 8000
 panel_icon: mdi:cube-outline
-# ingress: true
+ingress: true
 # ingress_port: 8000
 webui: "http://[HOST]:[PORT:8000]"
 # mount /config/doc folder into container
