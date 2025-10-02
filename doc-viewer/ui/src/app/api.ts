@@ -129,3 +129,39 @@ export async function delete_json(uri: string) {
     console.error(`Failed deleting ${uri}`, { cause: error });
   }
 }
+
+export async function upload_files(files: FileList, targetPath: string = '') {
+  try {
+    const formData = new FormData();
+    
+    // Add all files to form data
+    for (let i = 0; i < files.length; i++) {
+      formData.append('files', files[i]);
+    }
+    
+    // Add target path
+    formData.append('target_path', targetPath);
+    
+    let response: Response;
+    try {
+      response = await fetch('/api/upload', {
+        method: 'POST',
+        credentials: 'include',
+        mode: 'cors',
+        body: formData
+      });
+    } catch (error) {
+      console.error(`Failed uploading files`, { cause: error });
+      return;
+    }
+    
+    if (!response.ok) {
+      console.error(`HTTP error! status: ${response.status} for POST /api/upload`);
+      return;
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error(`Failed uploading files`, { cause: error });
+  }
+}

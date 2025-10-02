@@ -1,10 +1,11 @@
 import os
+import shutil
 import textwrap
 from fnmatch import fnmatch
 from typing import List
 
 import markdown
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, DirectoryPath, Field
@@ -241,3 +242,186 @@ async def get_file(path: str):
     if not os.path.isfile(normalized_path):
         raise HTTPException(status_code=404, detail=f"File not found: {path}")
     return FileResponse(normalized_path)
+
+
+def rsync_directory(source_dir: str, target_dir: str) -> dict:
+    """
+    Rsync-like functionality: copy changed files and delete files that don't exist in source.
+
+    Args:
+        source_dir: Source directory path
+        target_dir: Target directory path (relative to DOCS_ROOT)
+
+    Returns:
+        dict: Summary of operations performed
+    """
+    target_path = os.path.join(DOCS_ROOT, target_dir) if target_dir else DOCS_ROOT
+
+    # Ensure target directory exists
+    os.makedirs(target_path, exist_ok=True)
+
+    operations = {"copied": [], "deleted": [], "errors": []}
+
+    try:
+        # Get all files in source directory recursively
+        source_files = set()
+        for root, dirs, files in os.walk(source_dir):
+            # Skip excluded directories
+            dirs[:] = [
+                d for d in dirs if not any(fnmatch(d, p) for p in EXCLUDE_FOLDERS)
+            ]
+
+            for file in files:
+                # Skip excluded files
+                if any(fnmatch(file, p) for p in EXCLUDE_FILES):
+                    continue
+
+                rel_path = os.path.relpath(os.path.join(root, file), source_dir)
+                source_files.add(rel_path)
+
+                source_file_path = os.path.join(root, file)
+                target_file_path = os.path.join(target_path, rel_path)
+
+                # Create target directory if it doesn't exist
+                target_file_dir = os.path.dirname(target_file_path)
+                os.makedirs(target_file_dir, exist_ok=True)
+
+                # Check if file needs to be copied (doesn't exist or is different)
+                should_copy = True
+                if os.path.exists(target_file_path):
+                    source_stat = os.stat(source_file_path)
+                    target_stat = os.stat(target_file_path)
+                    # Compare modification time and size
+                    if (
+                        source_stat.st_mtime <= target_stat.st_mtime
+                        and source_stat.st_size == target_stat.st_size
+                    ):
+                        should_copy = False
+
+                if should_copy:
+                    try:
+                        shutil.copy2(source_file_path, target_file_path)
+                        operations["copied"].append(rel_path)
+                    except Exception as e:
+                        operations["errors"].append(
+                            f"Failed to copy {rel_path}: {str(e)}"
+                        )
+
+        # Delete files in target that don't exist in source
+        if os.path.exists(target_path):
+            for root, dirs, files in os.walk(target_path):
+                # Skip excluded directories
+                dirs[:] = [
+                    d for d in dirs if not any(fnmatch(d, p) for p in EXCLUDE_FOLDERS)
+                ]
+
+                for file in files:
+                    # Skip excluded files
+                    if any(fnmatch(file, p) for p in EXCLUDE_FILES):
+                        continue
+
+                    rel_path = os.path.relpath(os.path.join(root, file), target_path)
+
+                    if rel_path not in source_files:
+                        try:
+                            target_file_path = os.path.join(root, file)
+                            os.remove(target_file_path)
+                            operations["deleted"].append(rel_path)
+                        except Exception as e:
+                            operations["errors"].append(
+                                f"Failed to delete {rel_path}: {str(e)}"
+                            )
+
+            # Remove empty directories
+            for root, dirs, files in os.walk(target_path, topdown=False):
+                for dir_name in dirs:
+                    dir_path = os.path.join(root, dir_name)
+                    try:
+                        if not os.listdir(dir_path):  # Directory is empty
+                            os.rmdir(dir_path)
+                    except OSError:
+                        pass  # Directory not empty or other error, ignore
+
+    except Exception as e:
+        operations["errors"].append(f"General error: {str(e)}")
+
+    return operations
+
+
+class UploadResponse(BaseModel):
+    """Upload response model"""
+
+    message: str = Field(description="Upload result message")
+    operations: dict = Field(description="Summary of operations performed")
+
+
+@app.post(
+    "/api/upload",
+    response_model=UploadResponse,
+    summary="Upload Files",
+    description=dedent_and_convert_to_html(
+        "Upload files to the document repository with rsync-like behavior"
+    ),
+    responses={
+        200: {
+            "description": "Files uploaded successfully",
+            "model": UploadResponse,
+        },
+        400: {"description": "Upload error", "model": ErrorResponse},
+    },
+    tags=["Documents"],
+)
+async def upload_files(
+    files: List[UploadFile] = File(...), target_path: str = Form(default="")
+) -> UploadResponse:
+    """
+    Upload files to the document repository.
+
+    This endpoint accepts multiple files and uploads them to the specified target path
+    within the document root. It performs rsync-like operations:
+    - Copies new or changed files
+    - Deletes files that don't exist in the upload
+
+    Args:
+        files: List of files to upload
+        target_path: Target directory path relative to document root
+
+    Returns:
+        UploadResponse: Upload result with operation summary
+
+    Raises:
+        HTTPException: 400 if upload fails
+    """
+    import tempfile
+
+    if not files:
+        raise HTTPException(status_code=400, detail="No files provided")
+
+    # Create temporary directory for uploaded files
+    with tempfile.TemporaryDirectory() as temp_dir:
+        try:
+            # Save uploaded files to temporary directory
+            for file in files:
+                if file.filename:
+                    # Preserve directory structure from filename if it contains paths
+                    file_path = os.path.join(temp_dir, file.filename)
+                    file_dir = os.path.dirname(file_path)
+                    os.makedirs(file_dir, exist_ok=True)
+
+                    with open(file_path, "wb") as buffer:
+                        content = await file.read()
+                        buffer.write(content)
+
+            # Perform rsync-like operation
+            operations = rsync_directory(temp_dir, target_path)
+
+            total_operations = len(operations["copied"]) + len(operations["deleted"])
+            message = f"Upload completed. {len(operations['copied'])} files copied, {len(operations['deleted'])} files deleted"
+
+            if operations["errors"]:
+                message += f", {len(operations['errors'])} errors occurred"
+
+            return UploadResponse(message=message, operations=operations)
+
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"Upload failed: {str(e)}")

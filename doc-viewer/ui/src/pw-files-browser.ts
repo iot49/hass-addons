@@ -1,6 +1,6 @@
 import { LitElement, PropertyValues, css, html } from 'lit';
 import { customElement, property, query, state } from 'lit/decorators.js';
-import { get_json } from './app/api.ts';
+import { get_json, upload_files } from './app/api.ts';
 import { SlTreeItem } from './shoelace-config';
 import { FileRenderer } from './app/files/renderer';
 import { iconForFilename } from './app/files/icons';
@@ -118,15 +118,64 @@ export class PwFilesBrowser extends LitElement {
       color: var(--sl-color-primary-500);
     }
 
+    #uploadSection {
+      padding: 1rem;
+      border-top: 1px solid var(--sl-color-neutral-300);
+      background-color: var(--sl-color-neutral-50);
+    }
+
+    #uploadButton {
+      width: 100%;
+    }
+
+    #uploadDialog {
+      --width: 500px;
+    }
+
+    #uploadProgress {
+      margin-top: 1rem;
+      display: none;
+    }
+
+    #fileInput {
+      margin-bottom: 1rem;
+    }
+
+    .upload-status {
+      margin-top: 1rem;
+      padding: 0.5rem;
+      border-radius: 4px;
+      font-size: 0.875rem;
+    }
+
+    .upload-status.success {
+      background-color: var(--sl-color-success-50);
+      color: var(--sl-color-success-700);
+      border: 1px solid var(--sl-color-success-200);
+    }
+
+    .upload-status.error {
+      background-color: var(--sl-color-danger-50);
+      color: var(--sl-color-danger-700);
+      border: 1px solid var(--sl-color-danger-200);
+    }
+
   `;
 
   @state() root!: FolderModel;
   @property() selectedFilePath?: string;
   @state() private currentFilePath?: string;
+  @state() private uploadProgress = 0;
+  @state() private isUploading = false;
+  @state() private uploadStatus = '';
+  @state() private uploadStatusType: 'success' | 'error' | '' = '';
   private fileRenderer!: FileRenderer;
 
   @query('#treePane') treePane!: HTMLDivElement;
   @query('#fileContent') fileContent!: HTMLDivElement;
+  @query('#uploadDialog') uploadDialog!: any;
+  @query('#fileInput') fileInput!: HTMLInputElement;
+  @query('#uploadProgress') uploadProgressEl!: any;
 
   async connectedCallback() {
     await super.connectedCallback();
@@ -275,11 +324,83 @@ export class PwFilesBrowser extends LitElement {
     }
   }
 
+  private async handleUploadClick() {
+    this.uploadDialog.show();
+  }
+
+  private async handleUploadSubmit() {
+    const files = this.fileInput.files;
+    if (!files || files.length === 0) {
+      this.uploadStatus = 'Please select files to upload';
+      this.uploadStatusType = 'error';
+      return;
+    }
+
+    this.isUploading = true;
+    this.uploadProgress = 0;
+    this.uploadStatus = '';
+    this.uploadStatusType = '';
+    this.uploadProgressEl.style.display = 'block';
+
+    try {
+      // Simulate progress for user feedback
+      const progressInterval = setInterval(() => {
+        if (this.uploadProgress < 90) {
+          this.uploadProgress += 10;
+        }
+      }, 200);
+
+      const result = await upload_files(files, '');
+      
+      clearInterval(progressInterval);
+      this.uploadProgress = 100;
+
+      if (result) {
+        this.uploadStatus = result.message;
+        this.uploadStatusType = 'success';
+        
+        // Refresh the file tree after successful upload
+        setTimeout(async () => {
+          const rj = await get_json('/api/folder/');
+          this.root = new FolderModel(rj.path, rj.folders, rj.files);
+          this.requestUpdate();
+        }, 1000);
+      } else {
+        this.uploadStatus = 'Upload failed. Please try again.';
+        this.uploadStatusType = 'error';
+      }
+    } catch (error) {
+      this.uploadStatus = `Upload failed: ${error}`;
+      this.uploadStatusType = 'error';
+    } finally {
+      this.isUploading = false;
+      setTimeout(() => {
+        this.uploadProgressEl.style.display = 'none';
+        this.uploadProgress = 0;
+      }, 2000);
+    }
+  }
+
+  private handleUploadCancel() {
+    this.uploadDialog.hide();
+    this.fileInput.value = '';
+    this.uploadStatus = '';
+    this.uploadStatusType = '';
+    this.uploadProgress = 0;
+    this.uploadProgressEl.style.display = 'none';
+  }
+
   override render() {
     return html`
       <sl-split-panel position-in-pixels="250">
         <div id="treePane" slot="start">
           ${this.root == null ? html`Loading ... <sl-spinner></sl-spinner>` : html` ${this.treeTemplate(this.root)}`}
+          <div id="uploadSection">
+            <sl-button id="uploadButton" variant="primary" @click=${this.handleUploadClick}>
+              <sl-icon slot="prefix" name="upload"></sl-icon>
+              Upload Files
+            </sl-button>
+          </div>
         </div>
         <div id="filePane" slot="end">
           <div id="fileContent">Choose file to display ...</div>
@@ -290,6 +411,43 @@ export class PwFilesBrowser extends LitElement {
           </div>
         </div>
       </sl-split-panel>
+
+      <sl-dialog id="uploadDialog" label="Upload Files" class="dialog-overview">
+        <div>
+          <p>Select files or folders to upload to the document repository. This will sync the files (copy new/changed files and remove files that don't exist in your selection).</p>
+          
+          <input
+            id="fileInput"
+            type="file"
+            multiple
+            webkitdirectory
+            style="margin-bottom: 1rem;"
+          />
+          
+          <sl-progress-bar
+            id="uploadProgress"
+            value=${this.uploadProgress}
+            style="display: none;"
+          ></sl-progress-bar>
+
+          ${this.uploadStatus ? html`
+            <div class="upload-status ${this.uploadStatusType}">
+              ${this.uploadStatus}
+            </div>
+          ` : ''}
+        </div>
+
+        <div slot="footer">
+          <sl-button variant="default" @click=${this.handleUploadCancel}>Cancel</sl-button>
+          <sl-button
+            variant="primary"
+            @click=${this.handleUploadSubmit}
+            ?disabled=${this.isUploading}
+          >
+            ${this.isUploading ? 'Uploading...' : 'Upload'}
+          </sl-button>
+        </div>
+      </sl-dialog>
     `;
   }
 
