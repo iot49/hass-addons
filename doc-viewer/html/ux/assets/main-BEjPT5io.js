@@ -59107,11 +59107,18 @@ let PwFilesBrowser = class extends i$3 {
       if (result) {
         this.uploadStatus = result.message;
         this.uploadStatusType = "success";
-        setTimeout(async () => {
+        try {
           const rj = await get_json("/api/folder/");
           this.root = new FolderModel(rj.path, rj.folders, rj.files);
           this.requestUpdate();
-        }, 1e3);
+          await this.updateComplete;
+          this.uploadDialog.hide();
+          this.fileInput.value = "";
+          this.uploadStatus = "";
+          this.uploadStatusType = "";
+        } catch (refreshError) {
+          console.error("Error refreshing file tree:", refreshError);
+        }
       } else {
         this.uploadStatus = "Upload failed. Please try again.";
         this.uploadStatusType = "error";
