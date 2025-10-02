@@ -56,7 +56,16 @@ export class PwFilesBrowser extends LitElement {
     }
 
     #treePane {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    #treeContainer {
+      flex: 1;
       overflow: auto;
+      min-height: 0;
     }
 
     #filePane {
@@ -122,6 +131,7 @@ export class PwFilesBrowser extends LitElement {
       padding: 1rem;
       border-top: 1px solid var(--sl-color-neutral-300);
       background-color: var(--sl-color-neutral-50);
+      flex-shrink: 0;
     }
 
     #uploadButton {
@@ -394,7 +404,9 @@ export class PwFilesBrowser extends LitElement {
     return html`
       <sl-split-panel position-in-pixels="250">
         <div id="treePane" slot="start">
-          ${this.root == null ? html`Loading ... <sl-spinner></sl-spinner>` : html` ${this.treeTemplate(this.root)}`}
+          <div id="treeContainer">
+            ${this.root == null ? html`Loading ... <sl-spinner></sl-spinner>` : html` ${this.treeTemplate(this.root)}`}
+          </div>
           <div id="uploadSection">
             <sl-button id="uploadButton" variant="primary" @click=${this.handleUploadClick}>
               <sl-icon slot="prefix" name="upload"></sl-icon>
