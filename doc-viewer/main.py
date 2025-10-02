@@ -1,3 +1,4 @@
+import mimetypes
 import os
 import shutil
 import textwrap
@@ -106,12 +107,16 @@ app = FastAPI(
     version="1.0.0",
 )
 
+# Configure MIME types for proper static file serving
+mimetypes.add_type("text/css", ".css")
+mimetypes.add_type("application/javascript", ".js")
+mimetypes.add_type("application/javascript", ".mjs")
+
 # Mount static files for the UI - check for container vs local development
 if os.path.exists("/html/ux"):
     UI_DIR = "/html/ux"
 else:
     # For local development, use absolute path to the built UI
-
     script_dir = os.path.dirname(os.path.abspath(__file__))
     UI_DIR = os.path.join(script_dir, "html", "ux")
 
