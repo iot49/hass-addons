@@ -962,8 +962,8 @@ function getIconLibrary(name) {
  * Copyright 2019 Google LLC
  * SPDX-License-Identifier: BSD-3-Clause
  */
-const t$3 = globalThis, e$7 = t$3.ShadowRoot && (void 0 === t$3.ShadyCSS || t$3.ShadyCSS.nativeShadow) && "adoptedStyleSheets" in Document.prototype && "replace" in CSSStyleSheet.prototype, s$2 = Symbol(), o$7 = /* @__PURE__ */ new WeakMap();
-let n$6 = class n {
+const t$3 = globalThis, e$7 = t$3.ShadowRoot && (void 0 === t$3.ShadyCSS || t$3.ShadyCSS.nativeShadow) && "adoptedStyleSheets" in Document.prototype && "replace" in CSSStyleSheet.prototype, s$2 = Symbol(), o$6 = /* @__PURE__ */ new WeakMap();
+let n$5 = class n {
   constructor(t2, e2, o2) {
     if (this._$cssResult$ = true, o2 !== s$2) throw Error("CSSResult is not constructable. Use `unsafeCSS` or `css` instead.");
     this.cssText = t2, this.t = e2;
@@ -973,7 +973,7 @@ let n$6 = class n {
     const s2 = this.t;
     if (e$7 && void 0 === t2) {
       const e2 = void 0 !== s2 && 1 === s2.length;
-      e2 && (t2 = o$7.get(s2)), void 0 === t2 && ((this.o = t2 = new CSSStyleSheet()).replaceSync(this.cssText), e2 && o$7.set(s2, t2));
+      e2 && (t2 = o$6.get(s2)), void 0 === t2 && ((this.o = t2 = new CSSStyleSheet()).replaceSync(this.cssText), e2 && o$6.set(s2, t2));
     }
     return t2;
   }
@@ -981,13 +981,13 @@ let n$6 = class n {
     return this.cssText;
   }
 };
-const r$4 = (t2) => new n$6("string" == typeof t2 ? t2 : t2 + "", void 0, s$2), i$6 = (t2, ...e2) => {
+const r$4 = (t2) => new n$5("string" == typeof t2 ? t2 : t2 + "", void 0, s$2), i$5 = (t2, ...e2) => {
   const o2 = 1 === t2.length ? t2[0] : e2.reduce((e3, s2, o3) => e3 + ((t3) => {
     if (true === t3._$cssResult$) return t3.cssText;
     if ("number" == typeof t3) return t3;
     throw Error("Value passed to 'css' function must be a 'css' function result: " + t3 + ". Use 'unsafeCSS' to pass non-literal values, but take care to ensure page security.");
   })(s2) + t2[o3 + 1], t2[0]);
-  return new n$6(o2, t2, s$2);
+  return new n$5(o2, t2, s$2);
 }, S$1 = (s2, o2) => {
   if (e$7) s2.adoptedStyleSheets = o2.map((t2) => t2 instanceof CSSStyleSheet ? t2 : t2.styleSheet);
   else for (const e2 of o2) {
@@ -1004,7 +1004,7 @@ const r$4 = (t2) => new n$6("string" == typeof t2 ? t2 : t2 + "", void 0, s$2), 
  * Copyright 2017 Google LLC
  * SPDX-License-Identifier: BSD-3-Clause
  */
-const { is: i$5, defineProperty: e$6, getOwnPropertyDescriptor: h$1, getOwnPropertyNames: r$3, getOwnPropertySymbols: o$6, getPrototypeOf: n$5 } = Object, a$2 = globalThis, c$1 = a$2.trustedTypes, l$3 = c$1 ? c$1.emptyScript : "", p$1 = a$2.reactiveElementPolyfillSupport, d$1 = (t2, s2) => t2, u$3 = { toAttribute(t2, s2) {
+const { is: i$4, defineProperty: e$6, getOwnPropertyDescriptor: h$1, getOwnPropertyNames: r$3, getOwnPropertySymbols: o$5, getPrototypeOf: n$4 } = Object, a$2 = globalThis, c$1 = a$2.trustedTypes, l$3 = c$1 ? c$1.emptyScript : "", p$1 = a$2.reactiveElementPolyfillSupport, d$1 = (t2, s2) => t2, u$3 = { toAttribute(t2, s2) {
   switch (s2) {
     case Boolean:
       t2 = t2 ? l$3 : null;
@@ -1032,7 +1032,7 @@ const { is: i$5, defineProperty: e$6, getOwnPropertyDescriptor: h$1, getOwnPrope
       }
   }
   return i4;
-} }, f$2 = (t2, s2) => !i$5(t2, s2), b = { attribute: true, type: String, converter: u$3, reflect: false, useDefault: false, hasChanged: f$2 };
+} }, f$2 = (t2, s2) => !i$4(t2, s2), b = { attribute: true, type: String, converter: u$3, reflect: false, useDefault: false, hasChanged: f$2 };
 Symbol.metadata ?? (Symbol.metadata = Symbol("metadata")), a$2.litPropertyMetadata ?? (a$2.litPropertyMetadata = /* @__PURE__ */ new WeakMap());
 let y$1 = class y extends HTMLElement {
   static addInitializer(t2) {
@@ -1063,13 +1063,13 @@ let y$1 = class y extends HTMLElement {
   }
   static _$Ei() {
     if (this.hasOwnProperty(d$1("elementProperties"))) return;
-    const t2 = n$5(this);
+    const t2 = n$4(this);
     t2.finalize(), void 0 !== t2.l && (this.l = [...t2.l]), this.elementProperties = new Map(t2.elementProperties);
   }
   static finalize() {
     if (this.hasOwnProperty(d$1("finalized"))) return;
     if (this.finalized = true, this._$Ei(), this.hasOwnProperty(d$1("properties"))) {
-      const t3 = this.properties, s2 = [...r$3(t3), ...o$6(t3)];
+      const t3 = this.properties, s2 = [...r$3(t3), ...o$5(t3)];
       for (const i4 of s2) this.createProperty(i4, t3[i4]);
     }
     const t2 = this[Symbol.metadata];
@@ -1241,7 +1241,7 @@ y$1.elementStyles = [], y$1.shadowRootOptions = { mode: "open" }, y$1[d$1("eleme
  * Copyright 2017 Google LLC
  * SPDX-License-Identifier: BSD-3-Clause
  */
-const t$2 = globalThis, i$4 = t$2.trustedTypes, s$1 = i$4 ? i$4.createPolicy("lit-html", { createHTML: (t2) => t2 }) : void 0, e$5 = "$lit$", h = `lit$${Math.random().toFixed(9).slice(2)}$`, o$5 = "?" + h, n$4 = `<${o$5}>`, r$2 = document, l$2 = () => r$2.createComment(""), c = (t2) => null === t2 || "object" != typeof t2 && "function" != typeof t2, a$1 = Array.isArray, u$2 = (t2) => a$1(t2) || "function" == typeof (t2 == null ? void 0 : t2[Symbol.iterator]), d = "[ 	\n\f\r]", f$1 = /<(?:(!--|\/[^a-zA-Z])|(\/?[a-zA-Z][^>\s]*)|(\/?$))/g, v = /-->/g, _ = />/g, m$1 = RegExp(`>|${d}(?:([^\\s"'>=/]+)(${d}*=${d}*(?:[^ 	
+const t$2 = globalThis, i$3 = t$2.trustedTypes, s$1 = i$3 ? i$3.createPolicy("lit-html", { createHTML: (t2) => t2 }) : void 0, e$5 = "$lit$", h = `lit$${Math.random().toFixed(9).slice(2)}$`, o$4 = "?" + h, n$3 = `<${o$4}>`, r$2 = document, l$2 = () => r$2.createComment(""), c = (t2) => null === t2 || "object" != typeof t2 && "function" != typeof t2, a$1 = Array.isArray, u$2 = (t2) => a$1(t2) || "function" == typeof (t2 == null ? void 0 : t2[Symbol.iterator]), d = "[ 	\n\f\r]", f$1 = /<(?:(!--|\/[^a-zA-Z])|(\/?[a-zA-Z][^>\s]*)|(\/?$))/g, v = /-->/g, _ = />/g, m$1 = RegExp(`>|${d}(?:([^\\s"'>=/]+)(${d}*=${d}*(?:[^ 	
 \f\r"'\`<>=]|("|')|))|$)`, "g"), p = /'/g, g = /"/g, $ = /^(?:script|style|textarea|title)$/i, y2 = (t2) => (i4, ...s2) => ({ _$litType$: t2, strings: i4, values: s2 }), x = y2(1), T = Symbol.for("lit-noChange"), E = Symbol.for("lit-nothing"), A = /* @__PURE__ */ new WeakMap(), C = r$2.createTreeWalker(r$2, 129);
 function P2(t2, i4) {
   if (!a$1(t2) || !t2.hasOwnProperty("raw")) throw Error("invalid template strings array");
@@ -1255,7 +1255,7 @@ const V = (t2, i4) => {
     let a2, u2, d2 = -1, y3 = 0;
     for (; y3 < s3.length && (c2.lastIndex = y3, u2 = c2.exec(s3), null !== u2); ) y3 = c2.lastIndex, c2 === f$1 ? "!--" === u2[1] ? c2 = v : void 0 !== u2[1] ? c2 = _ : void 0 !== u2[2] ? ($.test(u2[2]) && (r2 = RegExp("</" + u2[2], "g")), c2 = m$1) : void 0 !== u2[3] && (c2 = m$1) : c2 === m$1 ? ">" === u2[0] ? (c2 = r2 ?? f$1, d2 = -1) : void 0 === u2[1] ? d2 = -2 : (d2 = c2.lastIndex - u2[2].length, a2 = u2[1], c2 = void 0 === u2[3] ? m$1 : '"' === u2[3] ? g : p) : c2 === g || c2 === p ? c2 = m$1 : c2 === v || c2 === _ ? c2 = f$1 : (c2 = m$1, r2 = void 0);
     const x2 = c2 === m$1 && t2[i5 + 1].startsWith("/>") ? " " : "";
-    l2 += c2 === f$1 ? s3 + n$4 : d2 >= 0 ? (o2.push(a2), s3.slice(0, d2) + e$5 + s3.slice(d2) + h + x2) : s3 + h + (-2 === d2 ? i5 : x2);
+    l2 += c2 === f$1 ? s3 + n$3 : d2 >= 0 ? (o2.push(a2), s3.slice(0, d2) + e$5 + s3.slice(d2) + h + x2) : s3 + h + (-2 === d2 ? i5 : x2);
   }
   return [P2(t2, l2 + (t2[s2] || "<?>") + (2 === i4 ? "</svg>" : 3 === i4 ? "</math>" : "")), o2];
 };
@@ -1278,12 +1278,12 @@ class N {
         if ($.test(r2.tagName)) {
           const t3 = r2.textContent.split(h), s3 = t3.length - 1;
           if (s3 > 0) {
-            r2.textContent = i$4 ? i$4.emptyScript : "";
+            r2.textContent = i$3 ? i$3.emptyScript : "";
             for (let i4 = 0; i4 < s3; i4++) r2.append(t3[i4], l$2()), C.nextNode(), d2.push({ type: 2, index: ++c2 });
             r2.append(t3[s3], l$2());
           }
         }
-      } else if (8 === r2.nodeType) if (r2.data === o$5) d2.push({ type: 2, index: c2 });
+      } else if (8 === r2.nodeType) if (r2.data === o$4) d2.push({ type: 2, index: c2 });
       else {
         let t3 = -1;
         for (; -1 !== (t3 = r2.data.indexOf(h, t3 + 1)); ) d2.push({ type: 7, index: c2 }), t3 += h.length - 1;
@@ -1477,7 +1477,7 @@ const B = (t2, i4, s2) => {
  * SPDX-License-Identifier: BSD-3-Clause
  */
 const s = globalThis;
-let i$3 = class i extends y$1 {
+let i$2 = class i extends y$1 {
   constructor() {
     super(...arguments), this.renderOptions = { host: this }, this._$Do = void 0;
   }
@@ -1502,11 +1502,11 @@ let i$3 = class i extends y$1 {
     return T;
   }
 };
-i$3._$litElement$ = true, i$3["finalized"] = true, (_c = s.litElementHydrateSupport) == null ? void 0 : _c.call(s, { LitElement: i$3 });
-const o$4 = s.litElementPolyfillSupport;
-o$4 == null ? void 0 : o$4({ LitElement: i$3 });
+i$2._$litElement$ = true, i$2["finalized"] = true, (_c = s.litElementHydrateSupport) == null ? void 0 : _c.call(s, { LitElement: i$2 });
+const o$3 = s.litElementPolyfillSupport;
+o$3 == null ? void 0 : o$3({ LitElement: i$2 });
 (s.litElementVersions ?? (s.litElementVersions = [])).push("4.2.0");
-var icon_styles_default = i$6`
+var icon_styles_default = i$5`
   :host {
     display: inline-block;
     width: 1em;
@@ -1612,7 +1612,7 @@ function watch(propertyName, options) {
     };
   };
 }
-var component_styles_default = i$6`
+var component_styles_default = i$5`
   :host {
     box-sizing: border-box;
   }
@@ -1642,7 +1642,7 @@ const t$1 = (t2) => (e2, o2) => {
  * Copyright 2017 Google LLC
  * SPDX-License-Identifier: BSD-3-Clause
  */
-const o$3 = { attribute: true, type: String, converter: u$3, reflect: false, hasChanged: f$2 }, r$1 = (t2 = o$3, e2, r2) => {
+const o$2 = { attribute: true, type: String, converter: u$3, reflect: false, hasChanged: f$2 }, r$1 = (t2 = o$2, e2, r2) => {
   const { kind: n3, metadata: i4 } = r2;
   let s2 = globalThis.litPropertyMetadata.get(i4);
   if (void 0 === s2 && globalThis.litPropertyMetadata.set(i4, s2 = /* @__PURE__ */ new Map()), "setter" === n3 && ((t2 = Object.create(t2)).wrapped = true), s2.set(r2.name, t2), "accessor" === n3) {
@@ -1663,7 +1663,7 @@ const o$3 = { attribute: true, type: String, converter: u$3, reflect: false, has
   }
   throw Error("Unsupported decorator location: " + n3);
 };
-function n$3(t2) {
+function n$2(t2) {
   return (e2, o2) => "object" == typeof o2 ? r$1(t2, e2, o2) : ((t3, e3, o3) => {
     const r2 = e3.hasOwnProperty(o3);
     return e3.constructor.createProperty(o3, t3), r2 ? Object.getOwnPropertyDescriptor(e3, o3) : void 0;
@@ -1675,7 +1675,7 @@ function n$3(t2) {
  * SPDX-License-Identifier: BSD-3-Clause
  */
 function r(r2) {
-  return n$3({ ...r2, state: true, attribute: false });
+  return n$2({ ...r2, state: true, attribute: false });
 }
 /**
  * @license
@@ -1700,7 +1700,7 @@ function e$3(e2, r2) {
   };
 }
 var _hasRecordedInitialProperties;
-var ShoelaceElement = class extends i$3 {
+var ShoelaceElement = class extends i$2 {
   constructor() {
     super();
     __privateAdd2(this, _hasRecordedInitialProperties, false);
@@ -1772,10 +1772,10 @@ _hasRecordedInitialProperties = /* @__PURE__ */ new WeakMap();
 ShoelaceElement.version = "2.20.1";
 ShoelaceElement.dependencies = {};
 __decorateClass$1([
-  n$3()
+  n$2()
 ], ShoelaceElement.prototype, "dir", 2);
 __decorateClass$1([
-  n$3()
+  n$2()
 ], ShoelaceElement.prototype, "lang", 2);
 /**
  * @license
@@ -1918,16 +1918,16 @@ __decorateClass$1([
   r()
 ], SlIcon.prototype, "svg", 2);
 __decorateClass$1([
-  n$3({ reflect: true })
+  n$2({ reflect: true })
 ], SlIcon.prototype, "name", 2);
 __decorateClass$1([
-  n$3()
+  n$2()
 ], SlIcon.prototype, "src", 2);
 __decorateClass$1([
-  n$3()
+  n$2()
 ], SlIcon.prototype, "label", 2);
 __decorateClass$1([
-  n$3({ reflect: true })
+  n$2({ reflect: true })
 ], SlIcon.prototype, "library", 2);
 __decorateClass$1([
   watch("label")
@@ -1936,7 +1936,7 @@ __decorateClass$1([
   watch(["name", "src", "library"])
 ], SlIcon.prototype, "setIcon", 1);
 SlIcon.define("sl-icon");
-var spinner_styles_default = i$6`
+var spinner_styles_default = i$5`
   :host {
     --track-width: 2px;
     --track-color: rgb(128 128 128 / 25%);
@@ -2151,7 +2151,7 @@ var SlSpinner = class extends ShoelaceElement {
 };
 SlSpinner.styles = [component_styles_default, spinner_styles_default];
 SlSpinner.define("sl-spinner");
-var tree_item_styles_default = i$6`
+var tree_item_styles_default = i$5`
   :host {
     display: block;
     outline: 0;
@@ -2304,7 +2304,7 @@ var tree_item_styles_default = i$6`
     }
   }
 `;
-var checkbox_styles_default = i$6`
+var checkbox_styles_default = i$5`
   :host {
     display: inline-block;
   }
@@ -2441,7 +2441,7 @@ var defaultValue = (propertyName = "value") => (proto, key) => {
     attributeChangedCallback.call(this, name, old, value);
   };
 };
-var form_control_styles_default = i$6`
+var form_control_styles_default = i$5`
   .form-control .form-control__label {
     display: none;
   }
@@ -2835,7 +2835,7 @@ var HasSlotController = class {
  * SPDX-License-Identifier: BSD-3-Clause
  */
 const t = { ATTRIBUTE: 1, PROPERTY: 3, BOOLEAN_ATTRIBUTE: 4 }, e$1 = (t2) => (...e2) => ({ _$litDirective$: t2, values: e2 });
-let i$2 = class i2 {
+let i$1 = class i2 {
   constructor(t2) {
   }
   get _$AU() {
@@ -2856,7 +2856,7 @@ let i$2 = class i2 {
  * Copyright 2018 Google LLC
  * SPDX-License-Identifier: BSD-3-Clause
  */
-const e = e$1(class extends i$2 {
+const e = e$1(class extends i$1 {
   constructor(t$12) {
     var _a2;
     if (super(t$12), t$12.type !== t.ATTRIBUTE || "class" !== t$12.name || ((_a2 = t$12.strings) == null ? void 0 : _a2.length) > 2) throw Error("`classMap()` can only be used in the `class` attribute and must be the only part in the attribute.");
@@ -2885,13 +2885,13 @@ const e = e$1(class extends i$2 {
  * Copyright 2018 Google LLC
  * SPDX-License-Identifier: BSD-3-Clause
  */
-const o$2 = (o2) => o2 ?? E;
+const o$1 = (o2) => o2 ?? E;
 /**
  * @license
  * Copyright 2020 Google LLC
  * SPDX-License-Identifier: BSD-3-Clause
  */
-const l$1 = e$1(class extends i$2 {
+const l$1 = e$1(class extends i$1 {
   constructor(r2) {
     if (super(r2), r2.type !== t.PROPERTY && r2.type !== t.ATTRIBUTE && r2.type !== t.BOOLEAN_ATTRIBUTE) throw Error("The `live` directive is not allowed on child or event bindings");
     if (!f(r2)) throw Error("`live` bindings can only contain a single expression");
@@ -3033,7 +3033,7 @@ var SlCheckbox = class extends ShoelaceElement {
             type="checkbox"
             title=${this.title}
             name=${this.name}
-            value=${o$2(this.value)}
+            value=${o$1(this.value)}
             .indeterminate=${l$1(this.indeterminate)}
             .checked=${l$1(this.checked)}
             .disabled=${this.disabled}
@@ -3090,37 +3090,37 @@ __decorateClass$1([
   r()
 ], SlCheckbox.prototype, "hasFocus", 2);
 __decorateClass$1([
-  n$3()
+  n$2()
 ], SlCheckbox.prototype, "title", 2);
 __decorateClass$1([
-  n$3()
+  n$2()
 ], SlCheckbox.prototype, "name", 2);
 __decorateClass$1([
-  n$3()
+  n$2()
 ], SlCheckbox.prototype, "value", 2);
 __decorateClass$1([
-  n$3({ reflect: true })
+  n$2({ reflect: true })
 ], SlCheckbox.prototype, "size", 2);
 __decorateClass$1([
-  n$3({ type: Boolean, reflect: true })
+  n$2({ type: Boolean, reflect: true })
 ], SlCheckbox.prototype, "disabled", 2);
 __decorateClass$1([
-  n$3({ type: Boolean, reflect: true })
+  n$2({ type: Boolean, reflect: true })
 ], SlCheckbox.prototype, "checked", 2);
 __decorateClass$1([
-  n$3({ type: Boolean, reflect: true })
+  n$2({ type: Boolean, reflect: true })
 ], SlCheckbox.prototype, "indeterminate", 2);
 __decorateClass$1([
   defaultValue("checked")
 ], SlCheckbox.prototype, "defaultChecked", 2);
 __decorateClass$1([
-  n$3({ reflect: true })
+  n$2({ reflect: true })
 ], SlCheckbox.prototype, "form", 2);
 __decorateClass$1([
-  n$3({ type: Boolean, reflect: true })
+  n$2({ type: Boolean, reflect: true })
 ], SlCheckbox.prototype, "required", 2);
 __decorateClass$1([
-  n$3({ attribute: "help-text" })
+  n$2({ attribute: "help-text" })
 ], SlCheckbox.prototype, "helpText", 2);
 __decorateClass$1([
   watch("disabled", { waitUntilFirstUpdate: true })
@@ -3195,7 +3195,7 @@ function shimKeyframesHeightAuto(keyframes, calculatedHeight) {
  * Copyright 2021 Google LLC
  * SPDX-License-Identifier: BSD-3-Clause
  */
-function n$2(n3, r2, t2) {
+function n$1(n3, r2, t2) {
   return n3 ? r2(n3) : t2 == null ? void 0 : t2(n3);
 }
 var _SlTreeItem = class _SlTreeItem2 extends ShoelaceElement {
@@ -3343,7 +3343,7 @@ var _SlTreeItem = class _SlTreeItem2 extends ShoelaceElement {
     })}
             aria-hidden="true"
           >
-            ${n$2(
+            ${n$1(
       this.loading,
       () => x` <sl-spinner part="spinner" exportparts="base:spinner__base"></sl-spinner> `
     )}
@@ -3355,7 +3355,7 @@ var _SlTreeItem = class _SlTreeItem2 extends ShoelaceElement {
             </slot>
           </div>
 
-          ${n$2(
+          ${n$1(
       this.selectable,
       () => x`
               <sl-checkbox
@@ -3407,16 +3407,16 @@ __decorateClass$1([
   r()
 ], _SlTreeItem.prototype, "selectable", 2);
 __decorateClass$1([
-  n$3({ type: Boolean, reflect: true })
+  n$2({ type: Boolean, reflect: true })
 ], _SlTreeItem.prototype, "expanded", 2);
 __decorateClass$1([
-  n$3({ type: Boolean, reflect: true })
+  n$2({ type: Boolean, reflect: true })
 ], _SlTreeItem.prototype, "selected", 2);
 __decorateClass$1([
-  n$3({ type: Boolean, reflect: true })
+  n$2({ type: Boolean, reflect: true })
 ], _SlTreeItem.prototype, "disabled", 2);
 __decorateClass$1([
-  n$3({ type: Boolean, reflect: true })
+  n$2({ type: Boolean, reflect: true })
 ], _SlTreeItem.prototype, "lazy", 2);
 __decorateClass$1([
   e$3("slot:not([name])")
@@ -3466,7 +3466,7 @@ setDefaultAnimation("tree-item.collapse", {
   ],
   options: { duration: 200, easing: "cubic-bezier(0.4, 0.0, 0.2, 1)" }
 });
-var tree_styles_default = i$6`
+var tree_styles_default = i$5`
   :host {
     /*
      * These are actually used by tree item, but we define them here so they can more easily be set and all tree items
@@ -3769,14 +3769,14 @@ __decorateClass$1([
   e$3("slot[name=collapse-icon]")
 ], SlTree.prototype, "collapsedIconSlot", 2);
 __decorateClass$1([
-  n$3()
+  n$2()
 ], SlTree.prototype, "selection", 2);
 __decorateClass$1([
   watch("selection")
 ], SlTree.prototype, "handleSelectionChange", 1);
 SlTree.define("sl-tree");
 SlTreeItem.define("sl-tree-item");
-var split_panel_styles_default = i$6`
+var split_panel_styles_default = i$5`
   :host {
     --divider-width: 4px;
     --divider-hit-area: 12px;
@@ -4084,7 +4084,7 @@ var SlSplitPanel = class extends ShoelaceElement {
       <div
         part="divider"
         class="divider"
-        tabindex=${o$2(this.disabled ? void 0 : "0")}
+        tabindex=${o$1(this.disabled ? void 0 : "0")}
         role="separator"
         aria-valuenow=${this.position}
         aria-valuemin="0"
@@ -4106,25 +4106,25 @@ __decorateClass$1([
   e$3(".divider")
 ], SlSplitPanel.prototype, "divider", 2);
 __decorateClass$1([
-  n$3({ type: Number, reflect: true })
+  n$2({ type: Number, reflect: true })
 ], SlSplitPanel.prototype, "position", 2);
 __decorateClass$1([
-  n$3({ attribute: "position-in-pixels", type: Number })
+  n$2({ attribute: "position-in-pixels", type: Number })
 ], SlSplitPanel.prototype, "positionInPixels", 2);
 __decorateClass$1([
-  n$3({ type: Boolean, reflect: true })
+  n$2({ type: Boolean, reflect: true })
 ], SlSplitPanel.prototype, "vertical", 2);
 __decorateClass$1([
-  n$3({ type: Boolean, reflect: true })
+  n$2({ type: Boolean, reflect: true })
 ], SlSplitPanel.prototype, "disabled", 2);
 __decorateClass$1([
-  n$3()
+  n$2()
 ], SlSplitPanel.prototype, "primary", 2);
 __decorateClass$1([
-  n$3({ reflect: true })
+  n$2({ reflect: true })
 ], SlSplitPanel.prototype, "snap", 1);
 __decorateClass$1([
-  n$3({ type: Number, attribute: "snap-threshold" })
+  n$2({ type: Number, attribute: "snap-threshold" })
 ], SlSplitPanel.prototype, "snapThreshold", 2);
 __decorateClass$1([
   watch("position")
@@ -4136,7 +4136,7 @@ __decorateClass$1([
   watch("vertical")
 ], SlSplitPanel.prototype, "handleVerticalChange", 1);
 SlSplitPanel.define("sl-split-panel");
-var button_styles_default = i$6`
+var button_styles_default = i$5`
   :host {
     display: inline-block;
     position: relative;
@@ -4735,19 +4735,19 @@ var button_styles_default = i$6`
  * Copyright 2020 Google LLC
  * SPDX-License-Identifier: BSD-3-Clause
  */
-const a = Symbol.for(""), o$1 = (t2) => {
+const a = Symbol.for(""), o = (t2) => {
   if ((t2 == null ? void 0 : t2.r) === a) return t2 == null ? void 0 : t2._$litStatic$;
-}, i$1 = (t2, ...r2) => ({ _$litStatic$: r2.reduce((r3, e2, a2) => r3 + ((t3) => {
+}, i3 = (t2, ...r2) => ({ _$litStatic$: r2.reduce((r3, e2, a2) => r3 + ((t3) => {
   if (void 0 !== t3._$litStatic$) return t3._$litStatic$;
   throw Error(`Value passed to 'literal' function must be a 'literal' result: ${t3}. Use 'unsafeStatic' to pass non-literal values, but
             take care to ensure page security.`);
-})(e2) + t2[a2 + 1], t2[0]), r: a }), l = /* @__PURE__ */ new Map(), n$1 = (t2) => (r2, ...e2) => {
+})(e2) + t2[a2 + 1], t2[0]), r: a }), l = /* @__PURE__ */ new Map(), n2 = (t2) => (r2, ...e2) => {
   const a2 = e2.length;
   let s2, i4;
   const n3 = [], u2 = [];
   let c2, $2 = 0, f2 = false;
   for (; $2 < a2; ) {
-    for (c2 = r2[$2]; $2 < a2 && void 0 !== (i4 = e2[$2], s2 = o$1(i4)); ) c2 += s2 + r2[++$2], f2 = true;
+    for (c2 = r2[$2]; $2 < a2 && void 0 !== (i4 = e2[$2], s2 = o(i4)); ) c2 += s2 + r2[++$2], f2 = true;
     $2 !== a2 && u2.push(i4), n3.push(c2), $2++;
   }
   if ($2 === a2 && n3.push(r2[a2]), f2) {
@@ -4755,7 +4755,7 @@ const a = Symbol.for(""), o$1 = (t2) => {
     void 0 === (r2 = l.get(t3)) && (n3.raw = n3, l.set(t3, r2 = n3)), e2 = u2;
   }
   return t2(r2, ...e2);
-}, u = n$1(x);
+}, u = n2(x);
 var SlButton = class extends ShoelaceElement {
   constructor() {
     super(...arguments);
@@ -4870,7 +4870,7 @@ var SlButton = class extends ShoelaceElement {
   }
   render() {
     const isLink = this.isLink();
-    const tag = isLink ? i$1`a` : i$1`button`;
+    const tag = isLink ? i3`a` : i3`button`;
     return u`
       <${tag}
         part="base"
@@ -4899,16 +4899,16 @@ var SlButton = class extends ShoelaceElement {
       "button--has-prefix": this.hasSlotController.test("prefix"),
       "button--has-suffix": this.hasSlotController.test("suffix")
     })}
-        ?disabled=${o$2(isLink ? void 0 : this.disabled)}
-        type=${o$2(isLink ? void 0 : this.type)}
+        ?disabled=${o$1(isLink ? void 0 : this.disabled)}
+        type=${o$1(isLink ? void 0 : this.type)}
         title=${this.title}
-        name=${o$2(isLink ? void 0 : this.name)}
-        value=${o$2(isLink ? void 0 : this.value)}
-        href=${o$2(isLink && !this.disabled ? this.href : void 0)}
-        target=${o$2(isLink ? this.target : void 0)}
-        download=${o$2(isLink ? this.download : void 0)}
-        rel=${o$2(isLink ? this.rel : void 0)}
-        role=${o$2(isLink ? void 0 : "button")}
+        name=${o$1(isLink ? void 0 : this.name)}
+        value=${o$1(isLink ? void 0 : this.value)}
+        href=${o$1(isLink && !this.disabled ? this.href : void 0)}
+        target=${o$1(isLink ? this.target : void 0)}
+        download=${o$1(isLink ? this.download : void 0)}
+        rel=${o$1(isLink ? this.rel : void 0)}
+        role=${o$1(isLink ? void 0 : "button")}
         aria-disabled=${this.disabled ? "true" : "false"}
         tabindex=${this.disabled ? "-1" : "0"}
         @blur=${this.handleBlur}
@@ -4940,70 +4940,70 @@ __decorateClass$1([
   r()
 ], SlButton.prototype, "invalid", 2);
 __decorateClass$1([
-  n$3()
+  n$2()
 ], SlButton.prototype, "title", 2);
 __decorateClass$1([
-  n$3({ reflect: true })
+  n$2({ reflect: true })
 ], SlButton.prototype, "variant", 2);
 __decorateClass$1([
-  n$3({ reflect: true })
+  n$2({ reflect: true })
 ], SlButton.prototype, "size", 2);
 __decorateClass$1([
-  n$3({ type: Boolean, reflect: true })
+  n$2({ type: Boolean, reflect: true })
 ], SlButton.prototype, "caret", 2);
 __decorateClass$1([
-  n$3({ type: Boolean, reflect: true })
+  n$2({ type: Boolean, reflect: true })
 ], SlButton.prototype, "disabled", 2);
 __decorateClass$1([
-  n$3({ type: Boolean, reflect: true })
+  n$2({ type: Boolean, reflect: true })
 ], SlButton.prototype, "loading", 2);
 __decorateClass$1([
-  n$3({ type: Boolean, reflect: true })
+  n$2({ type: Boolean, reflect: true })
 ], SlButton.prototype, "outline", 2);
 __decorateClass$1([
-  n$3({ type: Boolean, reflect: true })
+  n$2({ type: Boolean, reflect: true })
 ], SlButton.prototype, "pill", 2);
 __decorateClass$1([
-  n$3({ type: Boolean, reflect: true })
+  n$2({ type: Boolean, reflect: true })
 ], SlButton.prototype, "circle", 2);
 __decorateClass$1([
-  n$3()
+  n$2()
 ], SlButton.prototype, "type", 2);
 __decorateClass$1([
-  n$3()
+  n$2()
 ], SlButton.prototype, "name", 2);
 __decorateClass$1([
-  n$3()
+  n$2()
 ], SlButton.prototype, "value", 2);
 __decorateClass$1([
-  n$3()
+  n$2()
 ], SlButton.prototype, "href", 2);
 __decorateClass$1([
-  n$3()
+  n$2()
 ], SlButton.prototype, "target", 2);
 __decorateClass$1([
-  n$3()
+  n$2()
 ], SlButton.prototype, "rel", 2);
 __decorateClass$1([
-  n$3()
+  n$2()
 ], SlButton.prototype, "download", 2);
 __decorateClass$1([
-  n$3()
+  n$2()
 ], SlButton.prototype, "form", 2);
 __decorateClass$1([
-  n$3({ attribute: "formaction" })
+  n$2({ attribute: "formaction" })
 ], SlButton.prototype, "formAction", 2);
 __decorateClass$1([
-  n$3({ attribute: "formenctype" })
+  n$2({ attribute: "formenctype" })
 ], SlButton.prototype, "formEnctype", 2);
 __decorateClass$1([
-  n$3({ attribute: "formmethod" })
+  n$2({ attribute: "formmethod" })
 ], SlButton.prototype, "formMethod", 2);
 __decorateClass$1([
-  n$3({ attribute: "formnovalidate", type: Boolean })
+  n$2({ attribute: "formnovalidate", type: Boolean })
 ], SlButton.prototype, "formNoValidate", 2);
 __decorateClass$1([
-  n$3({ attribute: "formtarget" })
+  n$2({ attribute: "formtarget" })
 ], SlButton.prototype, "formTarget", 2);
 __decorateClass$1([
   watch("disabled", { waitUntilFirstUpdate: true })
@@ -5287,7 +5287,7 @@ function unlockBodyScrolling(lockingEl) {
     document.documentElement.style.removeProperty("--sl-scroll-lock-size");
   }
 }
-var dialog_styles_default = i$6`
+var dialog_styles_default = i$5`
   :host {
     --width: 31rem;
     --header-spacing: var(--sl-spacing-large);
@@ -5412,7 +5412,7 @@ var blurActiveElement = (elm) => {
     (_a2 = document.activeElement) == null ? void 0 : _a2.blur();
   }
 };
-var icon_button_styles_default = i$6`
+var icon_button_styles_default = i$5`
   :host {
     display: inline-block;
     color: var(--sl-color-neutral-600);
@@ -5495,7 +5495,7 @@ var SlIconButton = class extends ShoelaceElement {
   }
   render() {
     const isLink = this.href ? true : false;
-    const tag = isLink ? i$1`a` : i$1`button`;
+    const tag = isLink ? i3`a` : i3`button`;
     return u`
       <${tag}
         part="base"
@@ -5504,13 +5504,13 @@ var SlIconButton = class extends ShoelaceElement {
       "icon-button--disabled": !isLink && this.disabled,
       "icon-button--focused": this.hasFocus
     })}
-        ?disabled=${o$2(isLink ? void 0 : this.disabled)}
-        type=${o$2(isLink ? void 0 : "button")}
-        href=${o$2(isLink ? this.href : void 0)}
-        target=${o$2(isLink ? this.target : void 0)}
-        download=${o$2(isLink ? this.download : void 0)}
-        rel=${o$2(isLink && this.target ? "noreferrer noopener" : void 0)}
-        role=${o$2(isLink ? void 0 : "button")}
+        ?disabled=${o$1(isLink ? void 0 : this.disabled)}
+        type=${o$1(isLink ? void 0 : "button")}
+        href=${o$1(isLink ? this.href : void 0)}
+        target=${o$1(isLink ? this.target : void 0)}
+        download=${o$1(isLink ? this.download : void 0)}
+        rel=${o$1(isLink && this.target ? "noreferrer noopener" : void 0)}
+        role=${o$1(isLink ? void 0 : "button")}
         aria-disabled=${this.disabled ? "true" : "false"}
         aria-label="${this.label}"
         tabindex=${this.disabled ? "-1" : "0"}
@@ -5520,9 +5520,9 @@ var SlIconButton = class extends ShoelaceElement {
       >
         <sl-icon
           class="icon-button__icon"
-          name=${o$2(this.name)}
-          library=${o$2(this.library)}
-          src=${o$2(this.src)}
+          name=${o$1(this.name)}
+          library=${o$1(this.library)}
+          src=${o$1(this.src)}
           aria-hidden="true"
         ></sl-icon>
       </${tag}>
@@ -5538,28 +5538,28 @@ __decorateClass$1([
   r()
 ], SlIconButton.prototype, "hasFocus", 2);
 __decorateClass$1([
-  n$3()
+  n$2()
 ], SlIconButton.prototype, "name", 2);
 __decorateClass$1([
-  n$3()
+  n$2()
 ], SlIconButton.prototype, "library", 2);
 __decorateClass$1([
-  n$3()
+  n$2()
 ], SlIconButton.prototype, "src", 2);
 __decorateClass$1([
-  n$3()
+  n$2()
 ], SlIconButton.prototype, "href", 2);
 __decorateClass$1([
-  n$3()
+  n$2()
 ], SlIconButton.prototype, "target", 2);
 __decorateClass$1([
-  n$3()
+  n$2()
 ], SlIconButton.prototype, "download", 2);
 __decorateClass$1([
-  n$3()
+  n$2()
 ], SlIconButton.prototype, "label", 2);
 __decorateClass$1([
-  n$3({ type: Boolean, reflect: true })
+  n$2({ type: Boolean, reflect: true })
 ], SlIconButton.prototype, "disabled", 2);
 function waitForEvent(el, eventName) {
   return new Promise((resolve) => {
@@ -5723,8 +5723,8 @@ var SlDialog = class extends ShoelaceElement {
           role="dialog"
           aria-modal="true"
           aria-hidden=${this.open ? "false" : "true"}
-          aria-label=${o$2(this.noHeader ? this.label : void 0)}
-          aria-labelledby=${o$2(!this.noHeader ? "title" : void 0)}
+          aria-label=${o$1(this.noHeader ? this.label : void 0)}
+          aria-labelledby=${o$1(!this.noHeader ? "title" : void 0)}
           tabindex="-1"
         >
           ${!this.noHeader ? x`
@@ -5771,13 +5771,13 @@ __decorateClass$1([
   e$3(".dialog__overlay")
 ], SlDialog.prototype, "overlay", 2);
 __decorateClass$1([
-  n$3({ type: Boolean, reflect: true })
+  n$2({ type: Boolean, reflect: true })
 ], SlDialog.prototype, "open", 2);
 __decorateClass$1([
-  n$3({ reflect: true })
+  n$2({ reflect: true })
 ], SlDialog.prototype, "label", 2);
 __decorateClass$1([
-  n$3({ attribute: "no-header", type: Boolean, reflect: true })
+  n$2({ attribute: "no-header", type: Boolean, reflect: true })
 ], SlDialog.prototype, "noHeader", 2);
 __decorateClass$1([
   watch("open", { waitUntilFirstUpdate: true })
@@ -5809,210 +5809,7 @@ setDefaultAnimation("dialog.overlay.hide", {
   options: { duration: 250 }
 });
 SlDialog.define("sl-dialog");
-var progress_bar_styles_default = i$6`
-  :host {
-    --height: 1rem;
-    --track-color: var(--sl-color-neutral-200);
-    --indicator-color: var(--sl-color-primary-600);
-    --label-color: var(--sl-color-neutral-0);
-
-    display: block;
-  }
-
-  .progress-bar {
-    position: relative;
-    background-color: var(--track-color);
-    height: var(--height);
-    border-radius: var(--sl-border-radius-pill);
-    box-shadow: inset var(--sl-shadow-small);
-    overflow: hidden;
-  }
-
-  .progress-bar__indicator {
-    height: 100%;
-    font-family: var(--sl-font-sans);
-    font-size: 12px;
-    font-weight: var(--sl-font-weight-normal);
-    background-color: var(--indicator-color);
-    color: var(--label-color);
-    text-align: center;
-    line-height: var(--height);
-    white-space: nowrap;
-    overflow: hidden;
-    transition:
-      400ms width,
-      400ms background-color;
-    user-select: none;
-    -webkit-user-select: none;
-  }
-
-  /* Indeterminate */
-  .progress-bar--indeterminate .progress-bar__indicator {
-    position: absolute;
-    animation: indeterminate 2.5s infinite cubic-bezier(0.37, 0, 0.63, 1);
-  }
-
-  .progress-bar--indeterminate.progress-bar--rtl .progress-bar__indicator {
-    animation-name: indeterminate-rtl;
-  }
-
-  @media (forced-colors: active) {
-    .progress-bar {
-      outline: solid 1px SelectedItem;
-      background-color: var(--sl-color-neutral-0);
-    }
-
-    .progress-bar__indicator {
-      outline: solid 1px SelectedItem;
-      background-color: SelectedItem;
-    }
-  }
-
-  @keyframes indeterminate {
-    0% {
-      left: -50%;
-      width: 50%;
-    }
-    75%,
-    100% {
-      left: 100%;
-      width: 50%;
-    }
-  }
-
-  @keyframes indeterminate-rtl {
-    0% {
-      right: -50%;
-      width: 50%;
-    }
-    75%,
-    100% {
-      right: 100%;
-      width: 50%;
-    }
-  }
-`;
-/**
- * @license
- * Copyright 2018 Google LLC
- * SPDX-License-Identifier: BSD-3-Clause
- */
-const n2 = "important", i3 = " !" + n2, o = e$1(class extends i$2 {
-  constructor(t$12) {
-    var _a2;
-    if (super(t$12), t$12.type !== t.ATTRIBUTE || "style" !== t$12.name || ((_a2 = t$12.strings) == null ? void 0 : _a2.length) > 2) throw Error("The `styleMap` directive must be used in the `style` attribute and must be the only part in the attribute.");
-  }
-  render(t2) {
-    return Object.keys(t2).reduce((e2, r2) => {
-      const s2 = t2[r2];
-      return null == s2 ? e2 : e2 + `${r2 = r2.includes("-") ? r2 : r2.replace(/(?:^(webkit|moz|ms|o)|)(?=[A-Z])/g, "-$&").toLowerCase()}:${s2};`;
-    }, "");
-  }
-  update(e2, [r2]) {
-    const { style: s2 } = e2.element;
-    if (void 0 === this.ft) return this.ft = new Set(Object.keys(r2)), this.render(r2);
-    for (const t2 of this.ft) null == r2[t2] && (this.ft.delete(t2), t2.includes("-") ? s2.removeProperty(t2) : s2[t2] = null);
-    for (const t2 in r2) {
-      const e3 = r2[t2];
-      if (null != e3) {
-        this.ft.add(t2);
-        const r3 = "string" == typeof e3 && e3.endsWith(i3);
-        t2.includes("-") || r3 ? s2.setProperty(t2, r3 ? e3.slice(0, -11) : e3, r3 ? n2 : "") : s2[t2] = e3;
-      }
-    }
-    return T;
-  }
-});
-var SlProgressBar = class extends ShoelaceElement {
-  constructor() {
-    super(...arguments);
-    this.localize = new LocalizeController2(this);
-    this.value = 0;
-    this.indeterminate = false;
-    this.label = "";
-  }
-  render() {
-    return x`
-      <div
-        part="base"
-        class=${e({
-      "progress-bar": true,
-      "progress-bar--indeterminate": this.indeterminate,
-      "progress-bar--rtl": this.localize.dir() === "rtl"
-    })}
-        role="progressbar"
-        title=${o$2(this.title)}
-        aria-label=${this.label.length > 0 ? this.label : this.localize.term("progress")}
-        aria-valuemin="0"
-        aria-valuemax="100"
-        aria-valuenow=${this.indeterminate ? 0 : this.value}
-      >
-        <div part="indicator" class="progress-bar__indicator" style=${o({ width: `${this.value}%` })}>
-          ${!this.indeterminate ? x` <slot part="label" class="progress-bar__label"></slot> ` : ""}
-        </div>
-      </div>
-    `;
-  }
-};
-SlProgressBar.styles = [component_styles_default, progress_bar_styles_default];
-__decorateClass$1([
-  n$3({ type: Number, reflect: true })
-], SlProgressBar.prototype, "value", 2);
-__decorateClass$1([
-  n$3({ type: Boolean, reflect: true })
-], SlProgressBar.prototype, "indeterminate", 2);
-__decorateClass$1([
-  n$3()
-], SlProgressBar.prototype, "label", 2);
-SlProgressBar.define("sl-progress-bar");
 setBasePath("https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.1/cdn/");
-class ThemeManager {
-  constructor() {
-    this.currentTheme = "light";
-    this.initializeTheme();
-  }
-  static getInstance() {
-    if (!ThemeManager.instance) {
-      ThemeManager.instance = new ThemeManager();
-    }
-    return ThemeManager.instance;
-  }
-  initializeTheme() {
-    const savedTheme = localStorage.getItem("theme");
-    if (savedTheme) {
-      this.currentTheme = savedTheme;
-    } else {
-      this.currentTheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-    }
-    this.applyTheme();
-    window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (e2) => {
-      if (!localStorage.getItem("theme")) {
-        this.currentTheme = e2.matches ? "dark" : "light";
-        this.applyTheme();
-      }
-    });
-  }
-  applyTheme() {
-    document.documentElement.setAttribute("theme", this.currentTheme);
-    document.documentElement.classList.toggle("sl-theme-dark", this.currentTheme === "dark");
-    document.documentElement.classList.toggle("sl-theme-light", this.currentTheme === "light");
-    window.dispatchEvent(new CustomEvent("theme-changed", {
-      detail: { theme: this.currentTheme }
-    }));
-  }
-  setTheme(theme) {
-    this.currentTheme = theme;
-    localStorage.setItem("theme", theme);
-    this.applyTheme();
-  }
-  toggleTheme() {
-    this.setTheme(this.currentTheme === "light" ? "dark" : "light");
-  }
-  getCurrentTheme() {
-    return this.currentTheme;
-  }
-}
-ThemeManager.getInstance();
 async function get_json(uri) {
   try {
     let response;
@@ -58953,14 +58750,12 @@ class FolderModel {
     return parts[parts.length - 1];
   }
 }
-let PwFilesBrowser = class extends i$3 {
+let PwFilesBrowser = class extends i$2 {
   constructor() {
     super(...arguments);
-    this.uploadProgress = 0;
     this.isUploading = false;
     this.uploadStatus = "";
     this.uploadStatusType = "";
-    this.currentUploadingFile = "";
     this.handleFilePathEvent = (event) => {
       const customEvent = event;
       this.currentFilePath = customEvent.detail.path;
@@ -59075,41 +58870,17 @@ let PwFilesBrowser = class extends i$3 {
     this.uploadDialog.show();
   }
   async handleUploadSubmit() {
-    const files = this.fileInput.files;
     const folderFiles = this.folderInput.files;
-    let allFiles = [];
-    if (files && files.length > 0) {
-      allFiles = allFiles.concat(Array.from(files));
-    }
-    if (folderFiles && folderFiles.length > 0) {
-      allFiles = allFiles.concat(Array.from(folderFiles));
-    }
-    if (allFiles.length === 0) {
-      this.uploadStatus = "Please select files or folders to upload";
+    if (!folderFiles || folderFiles.length === 0) {
+      this.uploadStatus = "Please select a folder to upload";
       this.uploadStatusType = "error";
       return;
     }
     this.isUploading = true;
-    this.uploadProgress = 0;
     this.uploadStatus = "Upload in progress, this may take some time...";
     this.uploadStatusType = "";
-    this.currentUploadingFile = "";
-    this.uploadProgressEl.style.display = "block";
     try {
-      const fileList = {
-        length: allFiles.length,
-        item: (index) => allFiles[index],
-        [Symbol.iterator]: function* () {
-          for (let i4 = 0; i4 < allFiles.length; i4++) {
-            yield allFiles[i4];
-          }
-        }
-      };
-      Object.setPrototypeOf(fileList, FileList.prototype);
-      for (let i4 = 0; i4 < allFiles.length; i4++) {
-        fileList[i4] = allFiles[i4];
-      }
-      const result = await upload_files(fileList, "");
+      const result = await upload_files(folderFiles, "");
       if (result) {
         this.uploadStatus = result.message;
         this.uploadStatusType = "success";
@@ -59130,29 +58901,19 @@ let PwFilesBrowser = class extends i$3 {
       this.uploadStatusType = "error";
     } finally {
       this.isUploading = false;
-      this.uploadProgress = 100;
-      this.uploadProgressEl.style.display = "none";
     }
   }
   handleUploadCancel() {
     this.uploadDialog.hide();
-    this.fileInput.value = "";
     this.folderInput.value = "";
     this.uploadStatus = "";
     this.uploadStatusType = "";
-    this.uploadProgress = 0;
-    this.currentUploadingFile = "";
-    this.uploadProgressEl.style.display = "none";
   }
   handleUploadClose() {
     this.uploadDialog.hide();
-    this.fileInput.value = "";
     this.folderInput.value = "";
     this.uploadStatus = "";
     this.uploadStatusType = "";
-    this.uploadProgress = 0;
-    this.currentUploadingFile = "";
-    this.uploadProgressEl.style.display = "none";
   }
   render() {
     return x`
@@ -59164,7 +58925,7 @@ let PwFilesBrowser = class extends i$3 {
           <div id="uploadSection">
             <sl-button id="uploadButton" variant="primary" @click=${this.handleUploadClick}>
               <sl-icon slot="prefix" name="upload"></sl-icon>
-              Upload Files
+              Upload Folder
             </sl-button>
           </div>
         </div>
@@ -59176,22 +58937,12 @@ let PwFilesBrowser = class extends i$3 {
         </div>
       </sl-split-panel>
 
-      <sl-dialog id="uploadDialog" label="Upload Files" class="dialog-overview">
+      <sl-dialog id="uploadDialog" label="Upload Folder" class="dialog-overview">
         <div>
-          <p>Select files or folders to upload to the document repository. This will sync the files (copy new/changed files and remove files that don't exist in your selection).</p>
+          <p>Select a folder to upload to the document repository. This will completely replace the existing content with the uploaded folder.</p>
           
           <div style="margin-bottom: 1rem;">
             <label>
-              <input
-                id="fileInput"
-                type="file"
-                multiple
-                style="margin-right: 0.5rem;"
-              />
-              Select Files
-            </label>
-            <br/>
-            <label style="margin-top: 0.5rem; display: inline-block;">
               <input
                 id="folderInput"
                 type="file"
@@ -59202,15 +58953,11 @@ let PwFilesBrowser = class extends i$3 {
             </label>
           </div>
           
-          <sl-progress-bar
-            id="uploadProgress"
-            value=${this.uploadProgress}
-            style="display: none;"
-          ></sl-progress-bar>
-
-          <div id="currentFileDisplay">
-            ${this.currentUploadingFile ? `Processing: ${this.currentUploadingFile}` : ""}
-          </div>
+          ${this.isUploading ? x`
+            <div style="text-align: center; margin: 1rem 0;">
+              <sl-spinner style="font-size: 2rem;"></sl-spinner>
+            </div>
+          ` : ""}
 
           ${this.uploadStatus ? x`
             <div class="upload-status ${this.uploadStatusType}">
@@ -59245,7 +58992,7 @@ let PwFilesBrowser = class extends i$3 {
     </sl-tree>`;
   }
 };
-PwFilesBrowser.styles = i$6`
+PwFilesBrowser.styles = i$5`
     :host {
       display: block;
       height: 100vh;
@@ -59405,14 +59152,11 @@ __decorateClass([
   r()
 ], PwFilesBrowser.prototype, "root", 2);
 __decorateClass([
-  n$3()
+  n$2()
 ], PwFilesBrowser.prototype, "selectedFilePath", 2);
 __decorateClass([
   r()
 ], PwFilesBrowser.prototype, "currentFilePath", 2);
-__decorateClass([
-  r()
-], PwFilesBrowser.prototype, "uploadProgress", 2);
 __decorateClass([
   r()
 ], PwFilesBrowser.prototype, "isUploading", 2);
@@ -59422,9 +59166,6 @@ __decorateClass([
 __decorateClass([
   r()
 ], PwFilesBrowser.prototype, "uploadStatusType", 2);
-__decorateClass([
-  r()
-], PwFilesBrowser.prototype, "currentUploadingFile", 2);
 __decorateClass([
   e$3("#treePane")
 ], PwFilesBrowser.prototype, "treePane", 2);
@@ -59438,19 +59179,9 @@ __decorateClass([
   e$3("#uploadDialog")
 ], PwFilesBrowser.prototype, "uploadDialog", 2);
 __decorateClass([
-  e$3("#fileInput")
-], PwFilesBrowser.prototype, "fileInput", 2);
-__decorateClass([
   e$3("#folderInput")
 ], PwFilesBrowser.prototype, "folderInput", 2);
-__decorateClass([
-  e$3("#uploadProgress")
-], PwFilesBrowser.prototype, "uploadProgressEl", 2);
 PwFilesBrowser = __decorateClass([
   t$1("pw-files-browser")
 ], PwFilesBrowser);
 document.title = "Doc";
-document.addEventListener("DOMContentLoaded", () => {
-  const filesBrowser = document.createElement("pw-files-browser");
-  document.body.appendChild(filesBrowser);
-});
