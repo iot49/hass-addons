@@ -1,6 +1,7 @@
 import mimetypes
 import os
 import shutil
+import tempfile
 import textwrap
 from fnmatch import fnmatch
 from typing import List
@@ -268,77 +269,10 @@ async def get_file(path: str):
     return FileResponse(normalized_path)
 
 
-def copy_upload(source_dir: str, target_dir: str) -> dict:
-    """
-    Copy uploaded content to target directory, completely replacing existing content.
-
-    This function completely replaces the target directory with the source content,
-    ensuring that deleted files in the source are also removed from the target.
-
-    Args:
-        source_dir: Source directory path (temporary upload directory)
-        target_dir: Target directory path (relative to DOCS_ROOT)
-
-    Returns:
-        dict: Summary of operations performed
-    """
-    target_path = os.path.join(DOCS_ROOT, target_dir) if target_dir else DOCS_ROOT
-    operations = {"copied": [], "deleted": [], "errors": []}
-
-    try:
-        # If target directory exists, remove it completely first
-        if os.path.exists(target_path) and target_dir:  # Don't remove DOCS_ROOT itself
-            try:
-                shutil.rmtree(target_path)
-                operations["deleted"].append(
-                    f"Removed existing directory: {target_dir}"
-                )
-            except Exception as e:
-                operations["errors"].append(
-                    f"Failed to remove existing directory {target_dir}: {str(e)}"
-                )
-                return operations
-
-        # Ensure target directory exists
-        os.makedirs(target_path, exist_ok=True)
-
-        # Copy all files from source to target
-        for root, dirs, files in os.walk(source_dir):
-            # Skip excluded directories
-            dirs[:] = [
-                d for d in dirs if not any(fnmatch(d, p) for p in EXCLUDE_FOLDERS)
-            ]
-
-            for file in files:
-                # Skip excluded files
-                if any(fnmatch(file, p) for p in EXCLUDE_FILES):
-                    continue
-
-                source_file_path = os.path.join(root, file)
-                rel_path = os.path.relpath(source_file_path, source_dir)
-                target_file_path = os.path.join(target_path, rel_path)
-
-                # Create target directory if it doesn't exist
-                target_file_dir = os.path.dirname(target_file_path)
-                os.makedirs(target_file_dir, exist_ok=True)
-
-                try:
-                    shutil.copy2(source_file_path, target_file_path)
-                    operations["copied"].append(rel_path)
-                except Exception as e:
-                    operations["errors"].append(f"Failed to copy {rel_path}: {str(e)}")
-
-    except Exception as e:
-        operations["errors"].append(f"General error: {str(e)}")
-
-    return operations
-
-
 class UploadResponse(BaseModel):
     """Upload response model"""
 
     message: str = Field(description="Upload result message")
-    operations: dict = Field(description="Summary of operations performed")
 
 
 @app.post(
@@ -361,25 +295,23 @@ async def upload_files(
     files: List[UploadFile] = File(...), target_path: str = Form(default="")
 ) -> UploadResponse:
     """
-    Upload files to the document repository.
+    Upload folder to the document repository.
 
-    This endpoint accepts multiple files and uploads them to the specified target path
-    within the document root. It completely replaces the target directory:
-    - Removes existing content in the target directory
-    - Copies all uploaded files to the target directory
-    - Preserves directory structure from uploaded files
+    This endpoint accepts files from a folder upload and copies the entire folder
+    structure to the target path, completely replacing existing content.
 
     Args:
-        files: List of files to upload
+        files: List of files from folder upload
         target_path: Target directory path relative to document root
 
     Returns:
-        UploadResponse: Upload result with operation summary
+        UploadResponse: Upload result message
 
     Raises:
         HTTPException: 400 if upload fails
     """
-    import tempfile
+
+    print(f"Uploading to target path: {target_path or 'root'}")
 
     if not files:
         raise HTTPException(status_code=400, detail="No files provided")
@@ -387,10 +319,10 @@ async def upload_files(
     # Create temporary directory for uploaded files
     with tempfile.TemporaryDirectory() as temp_dir:
         try:
-            # Save uploaded files to temporary directory
+            # Save uploaded files to temporary directory, preserving folder structure
             for file in files:
+                print(f"Processing uploaded file: {file.filename}")
                 if file.filename:
-                    # Preserve directory structure from filename if it contains paths
                     file_path = os.path.join(temp_dir, file.filename)
                     file_dir = os.path.dirname(file_path)
                     os.makedirs(file_dir, exist_ok=True)
@@ -399,16 +331,19 @@ async def upload_files(
                         content = await file.read()
                         buffer.write(content)
 
-            # Perform copy operation
-            operations = copy_upload(temp_dir, target_path)
+            # Copy the entire folder structure using shutil.copytree
+            target_full_path = (
+                os.path.join(DOCS_ROOT, target_path) if target_path else DOCS_ROOT
+            )
+            if (
+                os.path.exists(target_full_path) and target_path
+            ):  # Don't remove DOCS_ROOT itself
+                shutil.rmtree(target_full_path)
+            shutil.copytree(temp_dir, target_full_path, dirs_exist_ok=True)
 
-            total_operations = len(operations["copied"]) + len(operations["deleted"])
-            message = f"Upload completed. {len(operations['copied'])} files copied, {len(operations['deleted'])} files deleted"
-
-            if operations["errors"]:
-                message += f", {len(operations['errors'])} errors occurred"
-
-            return UploadResponse(message=message, operations=operations)
+            return UploadResponse(
+                message=f"Folder uploaded successfully to {target_path or 'root'}"
+            )
 
         except Exception as e:
             raise HTTPException(status_code=400, detail=f"Upload failed: {str(e)}")

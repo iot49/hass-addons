@@ -199,20 +199,16 @@ export class PwFilesBrowser extends LitElement {
   @state() root!: FolderModel;
   @property() selectedFilePath?: string;
   @state() private currentFilePath?: string;
-  @state() private uploadProgress = 0;
   @state() private isUploading = false;
   @state() private uploadStatus = '';
   @state() private uploadStatusType: 'success' | 'error' | '' = '';
-  @state() private currentUploadingFile = '';
   private fileRenderer!: FileRenderer;
 
   @query('#treePane') treePane!: HTMLDivElement;
   @query('#treeContainer') treeContainer!: HTMLDivElement;
   @query('#fileContent') fileContent!: HTMLDivElement;
   @query('#uploadDialog') uploadDialog!: any;
-  @query('#fileInput') fileInput!: HTMLInputElement;
   @query('#folderInput') folderInput!: HTMLInputElement;
-  @query('#uploadProgress') uploadProgressEl!: any;
 
   async connectedCallback() {
     await super.connectedCallback();
@@ -366,51 +362,20 @@ export class PwFilesBrowser extends LitElement {
   }
 
   private async handleUploadSubmit() {
-    // Get files from both inputs
-    const files = this.fileInput.files;
     const folderFiles = this.folderInput.files;
     
-    // Combine files from both inputs
-    let allFiles: File[] = [];
-    if (files && files.length > 0) {
-      allFiles = allFiles.concat(Array.from(files));
-    }
-    if (folderFiles && folderFiles.length > 0) {
-      allFiles = allFiles.concat(Array.from(folderFiles));
-    }
-    
-    if (allFiles.length === 0) {
-      this.uploadStatus = 'Please select files or folders to upload';
+    if (!folderFiles || folderFiles.length === 0) {
+      this.uploadStatus = 'Please select a folder to upload';
       this.uploadStatusType = 'error';
       return;
     }
 
     this.isUploading = true;
-    this.uploadProgress = 0;
     this.uploadStatus = 'Upload in progress, this may take some time...';
     this.uploadStatusType = '';
-    this.currentUploadingFile = '';
-    this.uploadProgressEl.style.display = 'block';
 
     try {
-      // Create FileList-like object from combined files
-      const fileList = {
-        length: allFiles.length,
-        item: (index: number) => allFiles[index],
-        [Symbol.iterator]: function* () {
-          for (let i = 0; i < allFiles.length; i++) {
-            yield allFiles[i];
-          }
-        }
-      } as FileList;
-
-      // Add files to fileList prototype
-      Object.setPrototypeOf(fileList, FileList.prototype);
-      for (let i = 0; i < allFiles.length; i++) {
-        (fileList as any)[i] = allFiles[i];
-      }
-
-      const result = await upload_files(fileList, '');
+      const result = await upload_files(folderFiles, '');
 
       if (result) {
         this.uploadStatus = result.message;
@@ -434,31 +399,21 @@ export class PwFilesBrowser extends LitElement {
       this.uploadStatusType = 'error';
     } finally {
       this.isUploading = false;
-      this.uploadProgress = 100;
-      this.uploadProgressEl.style.display = 'none';
     }
   }
 
   private handleUploadCancel() {
     this.uploadDialog.hide();
-    this.fileInput.value = '';
     this.folderInput.value = '';
     this.uploadStatus = '';
     this.uploadStatusType = '';
-    this.uploadProgress = 0;
-    this.currentUploadingFile = '';
-    this.uploadProgressEl.style.display = 'none';
   }
 
   private handleUploadClose() {
     this.uploadDialog.hide();
-    this.fileInput.value = '';
     this.folderInput.value = '';
     this.uploadStatus = '';
     this.uploadStatusType = '';
-    this.uploadProgress = 0;
-    this.currentUploadingFile = '';
-    this.uploadProgressEl.style.display = 'none';
   }
 
   override render() {
@@ -471,7 +426,7 @@ export class PwFilesBrowser extends LitElement {
           <div id="uploadSection">
             <sl-button id="uploadButton" variant="primary" @click=${this.handleUploadClick}>
               <sl-icon slot="prefix" name="upload"></sl-icon>
-              Upload Files
+              Upload Folder
             </sl-button>
           </div>
         </div>
@@ -485,22 +440,12 @@ export class PwFilesBrowser extends LitElement {
         </div>
       </sl-split-panel>
 
-      <sl-dialog id="uploadDialog" label="Upload Files" class="dialog-overview">
+      <sl-dialog id="uploadDialog" label="Upload Folder" class="dialog-overview">
         <div>
-          <p>Select files or folders to upload to the document repository. This will sync the files (copy new/changed files and remove files that don't exist in your selection).</p>
+          <p>Select a folder to upload to the document repository. This will completely replace the existing content with the uploaded folder.</p>
           
           <div style="margin-bottom: 1rem;">
             <label>
-              <input
-                id="fileInput"
-                type="file"
-                multiple
-                style="margin-right: 0.5rem;"
-              />
-              Select Files
-            </label>
-            <br/>
-            <label style="margin-top: 0.5rem; display: inline-block;">
               <input
                 id="folderInput"
                 type="file"
@@ -511,15 +456,11 @@ export class PwFilesBrowser extends LitElement {
             </label>
           </div>
           
-          <sl-progress-bar
-            id="uploadProgress"
-            value=${this.uploadProgress}
-            style="display: none;"
-          ></sl-progress-bar>
-
-          <div id="currentFileDisplay">
-            ${this.currentUploadingFile ? `Processing: ${this.currentUploadingFile}` : ''}
-          </div>
+          ${this.isUploading ? html`
+            <div style="text-align: center; margin: 1rem 0;">
+              <sl-spinner style="font-size: 2rem;"></sl-spinner>
+            </div>
+          ` : ''}
 
           ${this.uploadStatus ? html`
             <div class="upload-status ${this.uploadStatusType}">
