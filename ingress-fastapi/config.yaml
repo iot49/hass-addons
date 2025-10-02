@@ -1,0 +1,21 @@
+name: "Ingress FastAPI"
+description: >-
+  Test Ingress with FastAPI App.
+version: "1.0.0"
+slug: "ingress-fastapi"
+init: false
+arch:
+  - aarch64
+  - amd64
+  - armhf
+  - armv7
+  - i386
+startup: services
+ingress: true
+
+# mount /config/doc folder into container
+map:
+  - type: homeassistant_config
+    read_only: False
+    path: /config
+
