@@ -8,3 +8,5 @@ arch:
   - armv7
   - i386
 ingress: true
+
+init: false
