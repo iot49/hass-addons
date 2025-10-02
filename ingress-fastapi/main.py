@@ -28,10 +28,6 @@ app = FastAPI(
 )
 
 
-# DIAGNOSTIC: Test different route decorators to identify the issue
-logger.error("DIAGNOSTIC: Setting up route handlers")
-
-
 @app.get("/{full_path:path}")
 async def catch_all_get(request: Request, full_path: str):
     logger.error("DIAGNOSTIC: GET route handler called")
@@ -42,16 +38,4 @@ async def catch_all_get(request: Request, full_path: str):
     logger.error(f"request.url: {request.url}")
     logger.error(f"request.scope: {request.scope}")
     logger.error(f"request.headers: {request.headers}")
-    return f"<html><body><p>Fast API catch_all full_path = '{full_path}' url = {request.url}</p></body></html>"
-
-
-# DIAGNOSTIC: Also add a catch-all for other methods
-@app.api_route("/{full_path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH"])
-async def catch_all_methods(request: Request, full_path: str):
-    logger.error(
-        f"DIAGNOSTIC: Catch-all route handler called for {request.method} {full_path}"
-    )
-    logger.error(f"request.url: {request.url}")
-    logger.error(f"request.scope: {request.scope}")
-    logger.error(f"request.headers: {request.headers}")
-    return f"<html><body><p>Fast API catch_all '{request.query_params}' '{full_path}'</p></body></html>"
+    return f"<html><body><p>Fast API catch_all query='{request.query_params}' full_path = '{full_path}' url = {request.url}</p></body></html>"
