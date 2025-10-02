@@ -1,7 +1,7 @@
 name: "Doc Viewer"
 description: >-
   Serve documentation in /config/docs.
-version: "1.7.20"
+version: "1.7.21"
 slug: "doc-viewer"
 init: false
 arch:
@@ -11,15 +11,12 @@ arch:
   - armv7
   - i386
 startup: services
-panel_icon: mdi:cube-outline
-panel_iframe: true
-ingress: true
-ingress_port: 8000
+
 # mount /config/doc folder into container
 map:
   - type: homeassistant_config
     read_only: False
     path: /config
-# webui: "http://[HOST]:[PORT:8000]"
-# ports:
-#   8000/tcp: 8000
+webui: "http://[HOST]:[PORT:8000]"
+ports:
+  8000/tcp: 8000
