@@ -268,27 +268,41 @@ async def get_file(path: str):
     return FileResponse(normalized_path)
 
 
-def rsync_directory(source_dir: str, target_dir: str) -> dict:
+def copy_upload(source_dir: str, target_dir: str) -> dict:
     """
-    Rsync-like functionality: copy changed files and delete files that don't exist in source.
+    Copy uploaded content to target directory, completely replacing existing content.
+
+    This function completely replaces the target directory with the source content,
+    ensuring that deleted files in the source are also removed from the target.
 
     Args:
-        source_dir: Source directory path
+        source_dir: Source directory path (temporary upload directory)
         target_dir: Target directory path (relative to DOCS_ROOT)
 
     Returns:
         dict: Summary of operations performed
     """
     target_path = os.path.join(DOCS_ROOT, target_dir) if target_dir else DOCS_ROOT
-
-    # Ensure target directory exists
-    os.makedirs(target_path, exist_ok=True)
-
     operations = {"copied": [], "deleted": [], "errors": []}
 
     try:
-        # Get all files in source directory recursively
-        source_files = set()
+        # If target directory exists, remove it completely first
+        if os.path.exists(target_path) and target_dir:  # Don't remove DOCS_ROOT itself
+            try:
+                shutil.rmtree(target_path)
+                operations["deleted"].append(
+                    f"Removed existing directory: {target_dir}"
+                )
+            except Exception as e:
+                operations["errors"].append(
+                    f"Failed to remove existing directory {target_dir}: {str(e)}"
+                )
+                return operations
+
+        # Ensure target directory exists
+        os.makedirs(target_path, exist_ok=True)
+
+        # Copy all files from source to target
         for root, dirs, files in os.walk(source_dir):
             # Skip excluded directories
             dirs[:] = [
@@ -300,71 +314,19 @@ def rsync_directory(source_dir: str, target_dir: str) -> dict:
                 if any(fnmatch(file, p) for p in EXCLUDE_FILES):
                     continue
 
-                rel_path = os.path.relpath(os.path.join(root, file), source_dir)
-                source_files.add(rel_path)
-
                 source_file_path = os.path.join(root, file)
+                rel_path = os.path.relpath(source_file_path, source_dir)
                 target_file_path = os.path.join(target_path, rel_path)
 
                 # Create target directory if it doesn't exist
                 target_file_dir = os.path.dirname(target_file_path)
                 os.makedirs(target_file_dir, exist_ok=True)
 
-                # Check if file needs to be copied (doesn't exist or is different)
-                should_copy = True
-                if os.path.exists(target_file_path):
-                    source_stat = os.stat(source_file_path)
-                    target_stat = os.stat(target_file_path)
-                    # Compare modification time and size
-                    if (
-                        source_stat.st_mtime <= target_stat.st_mtime
-                        and source_stat.st_size == target_stat.st_size
-                    ):
-                        should_copy = False
-
-                if should_copy:
-                    try:
-                        shutil.copy2(source_file_path, target_file_path)
-                        operations["copied"].append(rel_path)
-                    except Exception as e:
-                        operations["errors"].append(
-                            f"Failed to copy {rel_path}: {str(e)}"
-                        )
-
-        # Delete files in target that don't exist in source
-        if os.path.exists(target_path):
-            for root, dirs, files in os.walk(target_path):
-                # Skip excluded directories
-                dirs[:] = [
-                    d for d in dirs if not any(fnmatch(d, p) for p in EXCLUDE_FOLDERS)
-                ]
-
-                for file in files:
-                    # Skip excluded files
-                    if any(fnmatch(file, p) for p in EXCLUDE_FILES):
-                        continue
-
-                    rel_path = os.path.relpath(os.path.join(root, file), target_path)
-
-                    if rel_path not in source_files:
-                        try:
-                            target_file_path = os.path.join(root, file)
-                            os.remove(target_file_path)
-                            operations["deleted"].append(rel_path)
-                        except Exception as e:
-                            operations["errors"].append(
-                                f"Failed to delete {rel_path}: {str(e)}"
-                            )
-
-            # Remove empty directories
-            for root, dirs, files in os.walk(target_path, topdown=False):
-                for dir_name in dirs:
-                    dir_path = os.path.join(root, dir_name)
-                    try:
-                        if not os.listdir(dir_path):  # Directory is empty
-                            os.rmdir(dir_path)
-                    except OSError:
-                        pass  # Directory not empty or other error, ignore
+                try:
+                    shutil.copy2(source_file_path, target_file_path)
+                    operations["copied"].append(rel_path)
+                except Exception as e:
+                    operations["errors"].append(f"Failed to copy {rel_path}: {str(e)}")
 
     except Exception as e:
         operations["errors"].append(f"General error: {str(e)}")
@@ -384,7 +346,7 @@ class UploadResponse(BaseModel):
     response_model=UploadResponse,
     summary="Upload Files",
     description=dedent_and_convert_to_html(
-        "Upload files to the document repository with rsync-like behavior"
+        "Upload files to the document repository, completely replacing existing content"
     ),
     responses={
         200: {
@@ -402,9 +364,10 @@ async def upload_files(
     Upload files to the document repository.
 
     This endpoint accepts multiple files and uploads them to the specified target path
-    within the document root. It performs rsync-like operations:
-    - Copies new or changed files
-    - Deletes files that don't exist in the upload
+    within the document root. It completely replaces the target directory:
+    - Removes existing content in the target directory
+    - Copies all uploaded files to the target directory
+    - Preserves directory structure from uploaded files
 
     Args:
         files: List of files to upload
@@ -436,8 +399,8 @@ async def upload_files(
                         content = await file.read()
                         buffer.write(content)
 
-            # Perform rsync-like operation
-            operations = rsync_directory(temp_dir, target_path)
+            # Perform copy operation
+            operations = copy_upload(temp_dir, target_path)
 
             total_operations = len(operations["copied"]) + len(operations["deleted"])
             message = f"Upload completed. {len(operations['copied'])} files copied, {len(operations['deleted'])} files deleted"

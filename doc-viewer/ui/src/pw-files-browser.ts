@@ -211,6 +211,7 @@ export class PwFilesBrowser extends LitElement {
   @query('#fileContent') fileContent!: HTMLDivElement;
   @query('#uploadDialog') uploadDialog!: any;
   @query('#fileInput') fileInput!: HTMLInputElement;
+  @query('#folderInput') folderInput!: HTMLInputElement;
   @query('#uploadProgress') uploadProgressEl!: any;
 
   async connectedCallback() {
@@ -365,65 +366,64 @@ export class PwFilesBrowser extends LitElement {
   }
 
   private async handleUploadSubmit() {
+    // Get files from both inputs
     const files = this.fileInput.files;
-    if (!files || files.length === 0) {
-      this.uploadStatus = 'Please select files to upload';
+    const folderFiles = this.folderInput.files;
+    
+    // Combine files from both inputs
+    let allFiles: File[] = [];
+    if (files && files.length > 0) {
+      allFiles = allFiles.concat(Array.from(files));
+    }
+    if (folderFiles && folderFiles.length > 0) {
+      allFiles = allFiles.concat(Array.from(folderFiles));
+    }
+    
+    if (allFiles.length === 0) {
+      this.uploadStatus = 'Please select files or folders to upload';
       this.uploadStatusType = 'error';
       return;
     }
 
     this.isUploading = true;
     this.uploadProgress = 0;
-    this.uploadStatus = '';
+    this.uploadStatus = 'Upload in progress, this may take some time...';
     this.uploadStatusType = '';
     this.currentUploadingFile = '';
     this.uploadProgressEl.style.display = 'block';
 
     try {
-      // Simulate progress for user feedback with file name cycling
-      let fileIndex = 0;
-      const fileNames = Array.from(files).map(f => f.name);
-      
-      const progressInterval = setInterval(() => {
-        if (this.uploadProgress < 90) {
-          this.uploadProgress += 10;
-          // Cycle through file names to show current processing
-          if (fileNames.length > 0) {
-            this.currentUploadingFile = fileNames[fileIndex % fileNames.length];
-            fileIndex++;
+      // Create FileList-like object from combined files
+      const fileList = {
+        length: allFiles.length,
+        item: (index: number) => allFiles[index],
+        [Symbol.iterator]: function* () {
+          for (let i = 0; i < allFiles.length; i++) {
+            yield allFiles[i];
           }
-        } else {
-          // After cycling through files, show finalizing message
-          this.currentUploadingFile = 'Finalizing upload...';
         }
-      }, 200);
+      } as FileList;
 
-      const result = await upload_files(files, '');
-      
-      clearInterval(progressInterval);
-      this.uploadProgress = 100;
+      // Add files to fileList prototype
+      Object.setPrototypeOf(fileList, FileList.prototype);
+      for (let i = 0; i < allFiles.length; i++) {
+        (fileList as any)[i] = allFiles[i];
+      }
+
+      const result = await upload_files(fileList, '');
 
       if (result) {
         this.uploadStatus = result.message;
         this.uploadStatusType = 'success';
         
-        // Refresh the file tree after successful upload and close dialog when complete
+        // Refresh the file tree after successful upload
         try {
           const rj = await get_json('/api/folder/');
           this.root = new FolderModel(rj.path, rj.folders, rj.files);
           this.requestUpdate();
-          
-          // Wait for the next update cycle to complete before closing dialog
-          await this.updateComplete;
-          
-          // Close the dialog after successful upload and refresh
-          this.uploadDialog.hide();
-          this.fileInput.value = '';
-          this.uploadStatus = '';
-          this.uploadStatusType = '';
         } catch (refreshError) {
           console.error('Error refreshing file tree:', refreshError);
-          // Don't close dialog if refresh failed, so user can see the error
+          this.uploadStatus += ' (Warning: Failed to refresh file tree)';
         }
       } else {
         this.uploadStatus = 'Upload failed. Please try again.';
@@ -434,17 +434,26 @@ export class PwFilesBrowser extends LitElement {
       this.uploadStatusType = 'error';
     } finally {
       this.isUploading = false;
-      setTimeout(() => {
-        this.uploadProgressEl.style.display = 'none';
-        this.uploadProgress = 0;
-        this.currentUploadingFile = '';
-      }, 2000);
+      this.uploadProgress = 100;
+      this.uploadProgressEl.style.display = 'none';
     }
   }
 
   private handleUploadCancel() {
     this.uploadDialog.hide();
     this.fileInput.value = '';
+    this.folderInput.value = '';
+    this.uploadStatus = '';
+    this.uploadStatusType = '';
+    this.uploadProgress = 0;
+    this.currentUploadingFile = '';
+    this.uploadProgressEl.style.display = 'none';
+  }
+
+  private handleUploadClose() {
+    this.uploadDialog.hide();
+    this.fileInput.value = '';
+    this.folderInput.value = '';
     this.uploadStatus = '';
     this.uploadStatusType = '';
     this.uploadProgress = 0;
@@ -480,13 +489,27 @@ export class PwFilesBrowser extends LitElement {
         <div>
           <p>Select files or folders to upload to the document repository. This will sync the files (copy new/changed files and remove files that don't exist in your selection).</p>
           
-          <input
-            id="fileInput"
-            type="file"
-            multiple
-            webkitdirectory
-            style="margin-bottom: 1rem;"
-          />
+          <div style="margin-bottom: 1rem;">
+            <label>
+              <input
+                id="fileInput"
+                type="file"
+                multiple
+                style="margin-right: 0.5rem;"
+              />
+              Select Files
+            </label>
+            <br/>
+            <label style="margin-top: 0.5rem; display: inline-block;">
+              <input
+                id="folderInput"
+                type="file"
+                webkitdirectory
+                style="margin-right: 0.5rem;"
+              />
+              Select Folder
+            </label>
+          </div>
           
           <sl-progress-bar
             id="uploadProgress"
@@ -506,14 +529,18 @@ export class PwFilesBrowser extends LitElement {
         </div>
 
         <div slot="footer">
-          <sl-button variant="default" @click=${this.handleUploadCancel}>Cancel</sl-button>
-          <sl-button
-            variant="primary"
-            @click=${this.handleUploadSubmit}
-            ?disabled=${this.isUploading}
-          >
-            ${this.isUploading ? 'Uploading...' : 'Upload'}
-          </sl-button>
+          ${this.uploadStatusType === 'success' || this.uploadStatusType === 'error' ? html`
+            <sl-button variant="primary" @click=${this.handleUploadClose}>Close</sl-button>
+          ` : html`
+            <sl-button variant="default" @click=${this.handleUploadCancel}>Cancel</sl-button>
+            <sl-button
+              variant="primary"
+              @click=${this.handleUploadSubmit}
+              ?disabled=${this.isUploading}
+            >
+              ${this.isUploading ? 'Uploading...' : 'Upload'}
+            </sl-button>
+          `}
         </div>
       </sl-dialog>
     `;
