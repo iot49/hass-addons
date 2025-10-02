@@ -59097,6 +59097,8 @@ let PwFilesBrowser = class extends i$3 {
             this.currentUploadingFile = fileNames[fileIndex % fileNames.length];
             fileIndex++;
           }
+        } else {
+          this.currentUploadingFile = "Finalizing upload...";
         }
       }, 200);
       const result = await upload_files(files, "");
