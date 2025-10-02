@@ -31,8 +31,8 @@ app = FastAPI(
 @app.route("/{full_path:path}")
 async def catch_all(request: Request):  # , full_path: str):
     full_path = request.base_url
-    logger.warning(f"full_path: {full_path}")
-    logger.info(f"request.url: {request.url}")
+    logger.info(f"full_path: {full_path}")
+    # logger.info(f"request.url: {request.url}")
     # logger.info(f"request.scope: {request.scope}")
-    logger.info(f"request.headers: {request.headers}")
+    # logger.info(f"request.headers: {request.headers}")
     return f"<html><body><p>Fast API catch_all {full_path}</p></body></html>"
