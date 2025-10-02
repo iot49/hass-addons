@@ -18,7 +18,10 @@ COPY html/ /html/
 
 EXPOSE 8099
 
-CMD ["./bin/python3", "-m", "gunicorn", "main:app", "--bind", "172.30.32.2:8099", \
+# [2025-10-02 21:17:07 +0000] [79] [ERROR] connection to ('172.30.32.2', 8099) failed: [Errno 99] Address not available
+# [2025-10-02 21:17:08 +0000] [79] [ERROR] Can't connect to ('172.30.32.2', 8099)
+
+CMD ["./bin/python3", "-m", "gunicorn", "main:app", "--bind", "0.0.0.0:8099", \
         "--workers", "2", "--worker-class", "uvicorn.workers.UvicornWorker", \
         "--preload", "--log-level", "warning"]
 
