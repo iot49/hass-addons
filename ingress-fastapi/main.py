@@ -40,10 +40,14 @@ async def catch_all_get(request: Request, full_path: str):
     logger.error(f"request.scope: {request.scope}")
     logger.error(f"request.headers: {request.headers}")
 
+    # Extract the referer header
+    referer = request.headers.get("referer", "No referer header found")
+    logger.error(f"DIAGNOSTIC: Extracted referer: {referer}")
+
     # DIAGNOSTIC: Log what type of response we're about to return
     logger.error("DIAGNOSTIC: About to return HTML response")
 
-    html_content = f"<html><body><p>Fast API catch_all full_path = '{full_path}' headers = {request.headers} url = {request.url}</p></body></html>"
+    html_content = f"<html><body><p>Fast API catch_all full_path = '{full_path}' referer = '{referer}' url = {request.url}</p></body></html>"
     logger.error(f"DIAGNOSTIC: HTML content length: {len(html_content)}")
 
     return HTMLResponse(content=html_content)
