@@ -55,6 +55,22 @@ export class PwFilesBrowser extends LitElement {
       height: 100vh;
     }
 
+    sl-split-panel::part(divider) {
+      background-color: var(--sl-color-neutral-300);
+    }
+
+    sl-split-panel [slot="start"] {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    sl-split-panel [slot="end"] {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+
     #treePane {
       display: flex;
       flex-direction: column;
@@ -182,6 +198,7 @@ export class PwFilesBrowser extends LitElement {
   private fileRenderer!: FileRenderer;
 
   @query('#treePane') treePane!: HTMLDivElement;
+  @query('#treeContainer') treeContainer!: HTMLDivElement;
   @query('#fileContent') fileContent!: HTMLDivElement;
   @query('#uploadDialog') uploadDialog!: any;
   @query('#fileInput') fileInput!: HTMLInputElement;
@@ -246,7 +263,7 @@ export class PwFilesBrowser extends LitElement {
       this.fileRenderer.showFile(this.selectedFilePath);
     }
 
-    this.treePane.addEventListener('sl-lazy-load', async (event) => {
+    this.treeContainer.addEventListener('sl-lazy-load', async (event) => {
       const target = event.target as SlTreeItem;
       const path = target.getAttribute('data-path');
       const name = target.getAttribute('data-folder');
