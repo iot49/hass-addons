@@ -1,7 +1,7 @@
 name: "Ingress FastAPI"
 description: >-
   Test Ingress with FastAPI App.
-version: "1.0.12"
+version: "1.0.14"
 slug: "ingress-fastapi"
 init: false
 arch:
@@ -11,6 +11,8 @@ arch:
   - armv7
   - i386
 startup: services
+
+# https://github.com/home-assistant/supervisor/issues/1044
 ingress: true
 
 # mount /config/doc folder into container
