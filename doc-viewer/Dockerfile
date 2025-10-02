@@ -18,6 +18,6 @@ COPY html/ /html/
 
 EXPOSE 8000
 
-CMD ["./bin/python3", "-m", "gunicorn", "main:app", "--bind", "0.0.0.0:8000", \
+CMD ["./bin/python3", "-m", "gunicorn", "main:app", "--bind", "172.30.32.2:8000", \
         "--workers", "2", "--worker-class", "uvicorn.workers.UvicornWorker", \
         "--preload", "--log-level", "warning"]
