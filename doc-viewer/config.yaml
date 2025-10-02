@@ -1,7 +1,7 @@
 name: "Doc Viewer"
 description: >-
   Serve documentation in /config/docs.
-version: "1.7.26"
+version: "1.8.0"
 slug: "doc-viewer"
 init: false
 arch:
