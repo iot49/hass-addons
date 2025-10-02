@@ -21,3 +21,5 @@ EXPOSE 8099
 CMD ["./bin/python3", "-m", "gunicorn", "main:app", "--bind", "172.30.32.2:8099", \
         "--workers", "2", "--worker-class", "uvicorn.workers.UvicornWorker", \
         "--preload", "--log-level", "warning"]
+
+# uvicorn.run(app, host="172.30.32.2", port=8099)

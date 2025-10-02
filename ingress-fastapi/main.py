@@ -1,7 +1,6 @@
 import os
-from typing import Annotated
 
-from fastapi import FastAPI, Header
+from fastapi import FastAPI, Request
 
 # excludes (may use * and ? wildcards)
 EXCLUDE_FILES = [".DS_Store"]
@@ -23,12 +22,7 @@ app = FastAPI(
 )
 
 
-@app.get("/")
-async def read_root(user_agent: Annotated[str | None, Header()] = None):
-    """Serve the main UI application"""
-    return "<html><body><p>Fast API root</p></body></html>"
-
-
-@app.get("/api/health")
-async def health_check():
-    return "FastAPI-addon is healthy"
+@app.route("/{full_path:path}")
+async def catch_all(request: Request, full_path: str):
+    print("full_path: " + full_path)
+    return f"<html><body><p>Fast API catch_all {full_path}</p></body></html>"
