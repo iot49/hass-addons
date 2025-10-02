@@ -34,7 +34,7 @@ async def catch_all(request: Request):  # , full_path: str):
     logger.info(f"1 --------------------- full_path: {full_path}")
     logger.error(f"2 --------------------- full_path: {full_path}")
     print(f"3 --------------------- full_path: {full_path}")
-    # logger.info(f"request.url: {request.url}")
-    # logger.info(f"request.scope: {request.scope}")
-    # logger.info(f"request.headers: {request.headers}")
+    logger.error(f"request.url: {request.url}")
+    logger.error(f"request.scope: {request.scope}")
+    logger.error(f"request.headers: {request.headers}")
     return f"<html><body><p>Fast API catch_all {full_path}</p></body></html>"
