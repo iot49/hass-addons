@@ -15,7 +15,7 @@ from pydantic import BaseModel, DirectoryPath, Field
 if os.path.exists("/config/docs"):
     DOCS_ROOT = "/config/docs"
 else:
-    DOCS_ROOT = "/Users/boser/Documents/personal"
+    DOCS_ROOT = "/"
 
 # excludes (may use * and ? wildcards)
 EXCLUDE_FILES = [".DS_Store"]
