@@ -407,12 +407,24 @@ export class PwFilesBrowser extends LitElement {
         this.uploadStatus = result.message;
         this.uploadStatusType = 'success';
         
-        // Refresh the file tree after successful upload
-        setTimeout(async () => {
+        // Refresh the file tree after successful upload and close dialog when complete
+        try {
           const rj = await get_json('/api/folder/');
           this.root = new FolderModel(rj.path, rj.folders, rj.files);
           this.requestUpdate();
-        }, 1000);
+          
+          // Wait for the next update cycle to complete before closing dialog
+          await this.updateComplete;
+          
+          // Close the dialog after successful upload and refresh
+          this.uploadDialog.hide();
+          this.fileInput.value = '';
+          this.uploadStatus = '';
+          this.uploadStatusType = '';
+        } catch (refreshError) {
+          console.error('Error refreshing file tree:', refreshError);
+          // Don't close dialog if refresh failed, so user can see the error
+        }
       } else {
         this.uploadStatus = 'Upload failed. Please try again.';
         this.uploadStatusType = 'error';
