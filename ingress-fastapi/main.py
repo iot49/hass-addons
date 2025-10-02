@@ -3,8 +3,8 @@ import os
 import shutil
 import tempfile
 import textwrap
-from ast import List
 from fnmatch import fnmatch
+from typing import List
 from urllib.parse import urlparse
 
 from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
