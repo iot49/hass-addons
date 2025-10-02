@@ -58903,12 +58903,6 @@ let PwFilesBrowser = class extends i$2 {
       this.isUploading = false;
     }
   }
-  handleUploadCancel() {
-    this.uploadDialog.hide();
-    this.folderInput.value = "";
-    this.uploadStatus = "";
-    this.uploadStatusType = "";
-  }
   handleUploadClose() {
     this.uploadDialog.hide();
     this.folderInput.value = "";
@@ -58970,7 +58964,7 @@ let PwFilesBrowser = class extends i$2 {
           ${this.uploadStatusType === "success" || this.uploadStatusType === "error" ? x`
             <sl-button variant="primary" @click=${this.handleUploadClose}>Close</sl-button>
           ` : x`
-            <sl-button variant="default" @click=${this.handleUploadCancel}>Cancel</sl-button>
+            <sl-button variant="default" @click=${this.handleUploadClose}>Cancel</sl-button>
             <sl-button
               variant="primary"
               @click=${this.handleUploadSubmit}
