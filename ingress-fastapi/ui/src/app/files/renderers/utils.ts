@@ -76,3 +76,13 @@ export function createFileWrapper(contentHtml: string, path: string, additionalS
 export function setFileContent(filePane: HTMLDivElement, content: string): void {
   filePane.innerHTML = content;
 }
+
+// URL transformation function for ingress compatibility
+export function transformFileUrl(originalUrl: string): string {
+  if (window.location.pathname.includes('/hassio/ingress/')) {
+    // Transform to relative query parameter format
+    return `?route=${encodeURIComponent(originalUrl)}`;
+  } else {
+    return originalUrl;
+  }
+}

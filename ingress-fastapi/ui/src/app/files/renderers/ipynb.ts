@@ -1,4 +1,4 @@
-import { get_text } from '../../api';
+import { get_text } from '../../../../api.js';
 import { emitFilePathEvent, setFileContent } from './utils';
 
 // Import our local browser-compatible notebookjs

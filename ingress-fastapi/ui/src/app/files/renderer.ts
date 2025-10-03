@@ -41,7 +41,7 @@ export class FileRenderer {
       switch (extension) {
         case 'md':
         case 'qmd':
-          renderMarkdown(this.filePane, path, this);
+          await renderMarkdown(this.filePane, path, this);
           return;
 
         // Image file cases

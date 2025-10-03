@@ -1,4 +1,4 @@
-import { get_text } from '../../api';
+import { get_text } from '../../../../api';
 import { createFileWrapper, setFileContent, escapeHtml } from './utils';
 
 export async function renderFallback(filePane: HTMLDivElement, path: string): Promise<void> {

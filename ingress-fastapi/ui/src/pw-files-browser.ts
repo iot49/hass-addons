@@ -1,28 +1,10 @@
 import { LitElement, PropertyValues, css, html } from 'lit';
 import { customElement, property, query, state } from 'lit/decorators.js';
-import { get_json, upload_files } from './app/api.ts';
+import { get_json, upload_files } from '../api.ts';
 import { SlTreeItem } from './shoelace-config';
 import { FileRenderer } from './app/files/renderer';
 import { iconForFilename } from './app/files/icons';
-
-// URL transformation function for ingress compatibility
-function transformFileUrl(originalUrl: string): string {
-  // Check for ingress-specific indicators
-  const isIngressMode = window.location.pathname.includes('/hassio/ingress/') ||
-         window.location.hostname.includes('.leaf49.org') ||
-         !!(window as any).__INGRESS_BASE_URL__;
-  
-  if (!isIngressMode) {
-    return originalUrl;
-  }
-  
-  // Transform to relative query parameter format
-  if (!originalUrl.startsWith('http')) {
-    return `?route=${encodeURIComponent(originalUrl)}`;
-  }
-  
-  return originalUrl;
-}
+import { transformFileUrl } from './app/files/renderers/utils';
 
 interface FolderModelInterface {
   path: string;
