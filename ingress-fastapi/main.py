@@ -112,6 +112,15 @@ async def route_parser_middleware(request: Request, call_next):
     route_param = request.query_params.get("route")
     ui_param = request.query_params.get("ui")
 
+    print("=== MIDDLEWARE DEBUG ===")
+    print(f"Original URL: {request.url}")
+    print(f"Original path: {request.scope['path']}")
+    print(f"Route param: {route_param}")
+    print(f"UI param: {ui_param}")
+    print(f"Method: {request.method}")
+    print(f"Cookie header: {request.headers.get('cookie', 'None')}")
+    print(f"Authorization header: {request.headers.get('authorization', 'None')}")
+
     if route_param:
         print(f"API CALL: {request.url} -> route={route_param}")
     elif ui_param:
@@ -131,7 +140,8 @@ async def route_parser_middleware(request: Request, call_next):
         request.scope["path"] = decoded_route
         request.scope["query_string"] = b""  # Clear query string for internal routing
 
-        print(f"ROUTE TRANSFORM: {decoded_route}")
+        print(f"ROUTE TRANSFORM: '{decoded_route}'")
+        print(f"New path: {request.scope['path']}")
 
     return await call_next(request)
 
@@ -334,9 +344,18 @@ async def get_folder(path: str) -> FolderModel:
         GET /api/folder/rv/reports
         - Returns subfolders and files within rv/reports/
     """
+    print("=== GET_FOLDER DEBUG ===")
+    print(f"Received path parameter: '{path}'")
+    print(f"Current working directory: {os.getcwd()}")
+    print(f"DOCS_ROOT: {DOCS_ROOT}")
+
     normalized_path = os.path.normpath(path)
+    print(f"Normalized path: '{normalized_path}'")
+    print(f"Path exists: {os.path.exists(normalized_path)}")
+    print(f"Is directory: {os.path.isdir(normalized_path)}")
 
     if not os.path.isdir(normalized_path):
+        print(f"ERROR: Folder not found - {path}")
         raise HTTPException(status_code=404, detail=f"Folder not found: {path}")
 
     try:
