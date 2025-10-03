@@ -130,10 +130,12 @@ export class FileRenderer {
         case 'cmake':
           await renderCode(this.filePane, transformedPath, extension, this);
           break;
-      }
 
-      // Fallback for unhandled file types
-      await renderFallback(this.filePane, transformedPath);
+        default:
+          // Fallback for unhandled file types
+          await renderFallback(this.filePane, transformedPath);
+          break;
+      }
       
       // Apply HTML link transformation to all rendered content
       this.transformRenderedContent();

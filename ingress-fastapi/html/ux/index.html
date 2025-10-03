@@ -58641,8 +58641,10 @@ class FileRenderer {
         case "cmake":
           await renderCode(this.filePane, transformedPath, extension, this);
           break;
+        default:
+          await renderFallback(this.filePane, transformedPath);
+          break;
       }
-      await renderFallback(this.filePane, transformedPath);
       this.transformRenderedContent();
     } catch (error) {
       console.error("Error loading file:", error);
