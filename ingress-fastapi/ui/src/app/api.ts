@@ -13,9 +13,12 @@ function transformUrl(originalUrl: string): string {
   }
   
   // Use relative URL approach for ingress compatibility
+  // TODO: explain not all urls start with http
   if (!originalUrl.startsWith('http')) {
+    console.log(`Transforming URL for ingress: ${originalUrl}`);
     return `?route=${encodeURIComponent(originalUrl)}`;
   }
+  console.log(`Not transforming URL for ingress (absolute URL): ${originalUrl}`);
   return originalUrl;
 }
 
