@@ -5,6 +5,8 @@ import '../index.css';
 import 'urlpattern-polyfill';
 
 // Log all base URL information when app loads
+console.log('----------------------------------------------')
+for (let i=0; i<10; i++) console.log('\n')
 console.log('=== APP STARTUP - BASE URL INFORMATION ===');
 console.log('window.location.href:', window.location.href);
 console.log('window.location.origin:', window.location.origin);
