@@ -9,7 +9,6 @@ from typing import List
 
 from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import FileResponse
-from fastapi.staticfiles import StaticFiles
 from markdown import markdown
 from pydantic import BaseModel, DirectoryPath, Field
 
@@ -201,18 +200,23 @@ async def route_handler_main(request: Request):
         return FileResponse(index_path)
 
 
+"""
+TODO: NOT used? Check!
 # Serve the main UI at /file (backward compatibility)
 @app.get("/file")
 async def read_root():
-    """Serve the main UI application (backward compatibility)"""
+    ""Serve the main UI application (backward compatibility)""
     return FileResponse(f"{UI_DIR}/index.html")
 
 
 # Keep the static files mount for backward compatibility - MOVED TO END
 # This should be after all other routes to avoid conflicts
 app.mount("/ui", StaticFiles(directory=UI_DIR), name="static")
+"""
 
 
+"""
+TODO: DUPLICATE? check!
 @app.get(
     "/api/folder/",
     response_model=FolderModel,
@@ -230,7 +234,7 @@ app.mount("/ui", StaticFiles(directory=UI_DIR), name="static")
     tags=["Documents"],
 )
 async def get_root_folder() -> FolderModel:
-    """
+    "" "
     Browse the contents of the root folder in the document repository.
 
     Returns a list of subfolders and files within the root path.
@@ -246,7 +250,7 @@ async def get_root_folder() -> FolderModel:
     Example:
         GET /api/folder/
         - Returns subfolders and files within the root documents directory
-    """
+    "" "
     print("=== GET_ROOT_FOLDER DEBUG ===")
     print(f"Current working directory: {os.getcwd()}")
     print(f"DOCS_ROOT: {DOCS_ROOT}")
@@ -282,6 +286,7 @@ async def get_root_folder() -> FolderModel:
     except OSError as e:
         print(f"ERROR: OSError - {str(e)}")
         raise HTTPException(status_code=404, detail=f"Not found: {str(e)}")
+"""
 
 
 @app.get(

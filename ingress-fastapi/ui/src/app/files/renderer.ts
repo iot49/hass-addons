@@ -6,6 +6,7 @@ import { renderCode } from './renderers/code';
 import { renderJupyterNotebook } from './renderers/ipynb';
 import { renderHtml } from './renderers/html';
 import { renderFallback } from './renderers/fallback';
+import { transformUrl, transformHtmlLinks, handleInternalLinkClick } from '../../transformUrl';
 
 export class FileRenderer {
   private filePane: HTMLDivElement;
@@ -28,7 +29,9 @@ export class FileRenderer {
       return;
     }
 
-    this.currentFilePath = path;
+    // Always transform the path for API calls
+    const transformedPath = transformUrl(path);
+    this.currentFilePath = transformedPath;
 
     try {
       // Extract file extension to determine how to render
@@ -43,9 +46,9 @@ export class FileRenderer {
       switch (extension) {
         case 'md':
         case 'qmd':
-          console.log('Calling renderMarkdown for:', path);
-          await renderMarkdown(this.filePane, path, this);
-          return;
+          console.log('Calling renderMarkdown for:', transformedPath);
+          await renderMarkdown(this.filePane, transformedPath, this);
+          break;
 
         // Image file cases
         case 'jpg':
@@ -56,21 +59,21 @@ export class FileRenderer {
         case 'svg':
         case 'webp':
         case 'ico':
-          renderImage(this.filePane, path, fileName);
-          return;
+          renderImage(this.filePane, transformedPath, fileName);
+          break;
 
         case 'pdf':
-          renderPdf(this.filePane, path);
-          return;
+          renderPdf(this.filePane, transformedPath);
+          break;
 
         case 'ipynb':
-          await renderJupyterNotebook(this.filePane, path);
-          return;
+          await renderJupyterNotebook(this.filePane, transformedPath);
+          break;
 
         case 'html':
         case 'htm':
-          renderHtml(this.filePane, path);
-          return;
+          renderHtml(this.filePane, transformedPath);
+          break;
 
         // Audio file cases
         case 'mp3':
@@ -81,8 +84,8 @@ export class FileRenderer {
         case 'flac':
         case 'wma':
         case 'opus':
-          renderAudio(this.filePane, path, fileName, extension);
-          return;
+          renderAudio(this.filePane, transformedPath, fileName, extension);
+          break;
 
         // Code file cases
         case 'js':
@@ -123,12 +126,15 @@ export class FileRenderer {
         case 'dockerfile':
         case 'makefile':
         case 'cmake':
-          await renderCode(this.filePane, path, extension, this);
-          return;
+          await renderCode(this.filePane, transformedPath, extension, this);
+          break;
       }
 
       // Fallback for unhandled file types
-      await renderFallback(this.filePane, path);
+      await renderFallback(this.filePane, transformedPath);
+      
+      // Apply HTML link transformation to all rendered content
+      this.transformRenderedContent();
     } catch (error) {
       console.error('Error loading file:', error);
       this.filePane.innerHTML = `<p>Error loading file: ${error}</p>`;
@@ -145,6 +151,53 @@ export class FileRenderer {
         existingTemplate.remove();
       }
     });
+  }
+
+  /**
+   * Transform links in all rendered HTML content
+   */
+  private transformRenderedContent(): void {
+    // Transform direct HTML content
+    const htmlElements = this.filePane.querySelectorAll('[data-html-content]');
+    htmlElements.forEach(element => {
+      if (element.innerHTML) {
+        element.innerHTML = transformHtmlLinks(element.innerHTML);
+      }
+    });
+    
+    // Handle zero-md shadow DOM content
+    const zeroMdElements = this.filePane.querySelectorAll('zero-md');
+    zeroMdElements.forEach(zeroMd => {
+      // Use MutationObserver to detect when zero-md content is ready
+      this.observeZeroMdContent(zeroMd);
+    });
+  }
+
+  /**
+   * Observe zero-md content and transform links when ready
+   */
+  private observeZeroMdContent(zeroMd: Element): void {
+    const observer = new MutationObserver(() => {
+      if (zeroMd.shadowRoot) {
+        const shadowContent = zeroMd.shadowRoot.innerHTML;
+        const transformedContent = transformHtmlLinks(shadowContent);
+        if (transformedContent !== shadowContent) {
+          zeroMd.shadowRoot.innerHTML = transformedContent;
+        }
+        observer.disconnect(); // Stop observing once transformed
+      }
+    });
+    
+    observer.observe(zeroMd, { childList: true, subtree: true });
+    
+    // Also check if already rendered
+    if (zeroMd.shadowRoot) {
+      const shadowContent = zeroMd.shadowRoot.innerHTML;
+      const transformedContent = transformHtmlLinks(shadowContent);
+      if (transformedContent !== shadowContent) {
+        zeroMd.shadowRoot.innerHTML = transformedContent;
+      }
+    }
   }
 
   setupLinkClickHandler(): void {
@@ -246,6 +299,12 @@ export class FileRenderer {
   }
 
   private handleLinkClick = (event: Event): void => {
+    // Use the centralized link click handler
+    if (handleInternalLinkClick(event, (path) => this.showFile(path))) {
+      return; // Link was handled internally
+    }
+    
+    // Fallback to original logic for compatibility
     const link = event.target as HTMLAnchorElement;
     if (link && link.href) {
       const url = new URL(link.href);
@@ -266,7 +325,7 @@ export class FileRenderer {
       
       // Update browser URL and history
       const fileDisplayPath = targetPath.replace('/api/file/', '');
-      const state = { filePath: targetPath };
+      const state = { filePath: transformUrl(targetPath) };
       window.history.pushState(state, '', `/files/${fileDisplayPath}`);
       
       // Show the linked file in the current file pane

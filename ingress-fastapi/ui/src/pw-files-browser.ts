@@ -4,7 +4,7 @@ import { get_json, upload_files } from '../api.ts';
 import { SlTreeItem } from './shoelace-config';
 import { FileRenderer } from './app/files/renderer';
 import { iconForFilename } from './app/files/icons';
-import { transformFileUrl } from './app/files/renderers/utils';
+import { transformUrl } from './transformUrl';
 
 interface FolderModelInterface {
   path: string;
@@ -295,7 +295,7 @@ export class PwFilesBrowser extends LitElement {
           const filePathSegments = filePath.split('/').map((segment: string) => encodeURIComponent(segment));
           const encodedFilePath = filePathSegments.join('/');
           const dataPath = `/api/file/${encodedFilePath}`;
-          const transformedDataPath = transformFileUrl(dataPath);
+          const transformedDataPath = transformUrl(dataPath);
 
           // Create icon element
           const icon = document.createElement('sl-icon');
@@ -332,7 +332,7 @@ export class PwFilesBrowser extends LitElement {
       }
     });
 
-    this.fileRenderer.showFile(transformFileUrl(`/api/file/index.md`));
+    this.fileRenderer.showFile(transformUrl(`/api/file/index.md`));
   }
 
   protected updated(changedProperties: PropertyValues): void {
@@ -413,7 +413,7 @@ export class PwFilesBrowser extends LitElement {
           <div id="fileContent">Choose file to display ...</div>
           <div id="fileBottomBar">
             ${this.currentFilePath
-              ? html`<a href="${transformFileUrl(this.currentFilePath)}" target="_blank" style="color: var(--sl-color-primary-600); text-decoration: none;"
+              ? html`<a href="${transformUrl(this.currentFilePath)}" target="_blank" style="color: var(--sl-color-primary-600); text-decoration: none;"
                   >Click here to open the file in a new tab</a
                 >`
               : 'Select a file to view'}
