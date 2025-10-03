@@ -22,6 +22,9 @@ export function renderMarkdown(
   path: string,
   renderer: MarkdownRenderer
 ): void {
+  console.log('renderMarkdown called with path:', path);
+  console.log('Is path already transformed?', path.includes('?route='));
+  
   const contentHtml = `
     <div style="flex: 1; min-height: 0; overflow: auto;">
       <zero-md src="${path}"></zero-md>
@@ -29,6 +32,17 @@ export function renderMarkdown(
   `;
   
   setFileContent(filePane, createFileWrapper(contentHtml, path));
+  
+  // Add event listener to detect zero-md loading issues
+  const zeroMdElement = filePane.querySelector('zero-md');
+  if (zeroMdElement) {
+    zeroMdElement.addEventListener('zero-md-error', (event: any) => {
+      console.error('Zero-MD error:', event.detail);
+    });
+    zeroMdElement.addEventListener('zero-md-rendered', () => {
+      console.log('Zero-MD successfully rendered content');
+    });
+  }
   // Link click handler and HTML transformation handled by renderer.ts
   // This sets up click handlers for links within the rendered markdown content
 
