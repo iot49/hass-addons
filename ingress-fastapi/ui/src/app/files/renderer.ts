@@ -32,8 +32,6 @@ export class FileRenderer {
     // Always transform the path for API calls
     const transformedPath = transformUrl(path);
     this.currentFilePath = transformedPath;
-    
-          console.log(`render: ${transformedPath} <- ${path}`);
 
     try {
       // Extract file extension to determine how to render
@@ -48,7 +46,6 @@ export class FileRenderer {
       switch (extension) {
         case 'md':
         case 'qmd':
-          console.log(`Calling renderMarkdown for: ${transformedPath} ${path}`);
           await renderMarkdown(this.filePane, transformedPath, this);
           break;
 

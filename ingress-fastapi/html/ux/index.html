@@ -6029,23 +6029,12 @@ function setFileContent(filePane, content) {
   filePane.innerHTML = content;
 }
 function renderMarkdown(filePane, path, renderer) {
-  console.log("renderMarkdown called with path:", path);
-  console.log("Is path already transformed?", path.includes("?route="));
   const contentHtml = `
     <div style="flex: 1; min-height: 0; overflow: auto;">
       <zero-md src="${path}"></zero-md>
     </div>
   `;
   setFileContent(filePane, createFileWrapper(contentHtml, path));
-  const zeroMdElement = filePane.querySelector("zero-md");
-  if (zeroMdElement) {
-    zeroMdElement.addEventListener("zero-md-error", (event) => {
-      console.error("Zero-MD error:", event.detail);
-    });
-    zeroMdElement.addEventListener("zero-md-rendered", () => {
-      console.log("Zero-MD successfully rendered content");
-    });
-  }
   renderer.setupLinkClickHandler();
 }
 function renderImage(filePane, path, fileName) {
@@ -58554,7 +58543,6 @@ class FileRenderer {
     }
     const transformedPath = transformUrl(path);
     this.currentFilePath = transformedPath;
-    console.log(`render: ${transformedPath} <- ${path}`);
     try {
       const fileName = path.split("/").pop() || "";
       const extension = ((_a2 = fileName.split(".").pop()) == null ? void 0 : _a2.toLowerCase()) || "";
@@ -58563,7 +58551,6 @@ class FileRenderer {
       switch (extension) {
         case "md":
         case "qmd":
-          console.log(`Calling renderMarkdown for: ${transformedPath} ${path}`);
           await renderMarkdown(this.filePane, transformedPath, this);
           break;
         // Image file cases
