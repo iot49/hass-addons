@@ -58659,14 +58659,18 @@ class FileRenderer {
    * Transform links in all rendered HTML content
    */
   transformRenderedContent() {
+    console.log(`[DEBUG] transformRenderedContent - called`);
     const htmlElements = this.filePane.querySelectorAll("[data-html-content]");
+    console.log(`[DEBUG] transformRenderedContent - found ${htmlElements.length} HTML elements`);
     htmlElements.forEach((element) => {
       if (element.innerHTML) {
         element.innerHTML = transformHtmlLinks(element.innerHTML);
       }
     });
     const zeroMdElements = this.filePane.querySelectorAll("zero-md");
+    console.log(`[DEBUG] transformRenderedContent - found ${zeroMdElements.length} zero-md elements`);
     zeroMdElements.forEach((zeroMd) => {
+      console.log(`[DEBUG] transformRenderedContent - setting up observer for zero-md element`);
       this.observeZeroMdContent(zeroMd);
     });
   }

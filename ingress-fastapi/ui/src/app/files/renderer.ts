@@ -156,8 +156,11 @@ export class FileRenderer {
    * Transform links in all rendered HTML content
    */
   private transformRenderedContent(): void {
+    console.log(`[DEBUG] transformRenderedContent - called`);
+    
     // Transform direct HTML content
     const htmlElements = this.filePane.querySelectorAll('[data-html-content]');
+    console.log(`[DEBUG] transformRenderedContent - found ${htmlElements.length} HTML elements`);
     htmlElements.forEach(element => {
       if (element.innerHTML) {
         element.innerHTML = transformHtmlLinks(element.innerHTML);
@@ -166,7 +169,9 @@ export class FileRenderer {
     
     // Handle zero-md shadow DOM content
     const zeroMdElements = this.filePane.querySelectorAll('zero-md');
+    console.log(`[DEBUG] transformRenderedContent - found ${zeroMdElements.length} zero-md elements`);
     zeroMdElements.forEach(zeroMd => {
+      console.log(`[DEBUG] transformRenderedContent - setting up observer for zero-md element`);
       // Use MutationObserver to detect when zero-md content is ready
       this.observeZeroMdContent(zeroMd);
     });
