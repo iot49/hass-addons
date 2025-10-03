@@ -1,10 +1,35 @@
+// URL transformation functions for ingress compatibility
+function isIngressMode(): boolean {
+  // Check for ingress-specific indicators
+  return window.location.pathname.includes('/hassio/ingress/') ||
+         window.location.hostname.includes('.leaf49.org') ||
+         !!(window as any).__INGRESS_BASE_URL__;
+}
+
+function getBaseUrl(): string {
+  return (window as any).__INGRESS_BASE_URL__ || '';
+}
+
+function transformUrl(originalUrl: string): string {
+  if (!isIngressMode()) {
+    return originalUrl;
+  }
+  
+  const baseUrl = getBaseUrl();
+  if (baseUrl && !originalUrl.startsWith('http')) {
+    return `${baseUrl}?route=${encodeURIComponent(originalUrl)}`;
+  }
+  return originalUrl;
+}
+
 export async function get_json(uri: string) {
   try {
+    const transformedUri = transformUrl(uri);
     let response: Response;
     try {
-      response = await fetch(uri, { method: 'GET', credentials: 'include', mode: 'cors' });
+      response = await fetch(transformedUri, { method: 'GET', credentials: 'include', mode: 'cors' });
     } catch (error) {
-      throw new Error(`Failed fetching ${uri}`, { cause: error });
+      throw new Error(`Failed fetching ${transformedUri}`, { cause: error });
     }
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -18,11 +43,12 @@ export async function get_json(uri: string) {
 
 export async function get_text(uri: string) {
   try {
+    const transformedUri = transformUrl(uri);
     let response: Response;
     try {
-      response = await fetch(uri, { method: 'GET', credentials: 'include', mode: 'cors' });
+      response = await fetch(transformedUri, { method: 'GET', credentials: 'include', mode: 'cors' });
     } catch (error) {
-      throw new Error(`Failed fetching ${uri}`, { cause: error });
+      throw new Error(`Failed fetching ${transformedUri}`, { cause: error });
     }
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -35,9 +61,10 @@ export async function get_text(uri: string) {
 
 export async function post_json(uri: string, data?: any) {
   try {
+    const transformedUri = transformUrl(uri);
     let response: Response;
     try {
-      response = await fetch(uri, {
+      response = await fetch(transformedUri, {
         method: 'POST',
         credentials: 'include',
         mode: 'cors',
@@ -47,11 +74,11 @@ export async function post_json(uri: string, data?: any) {
         body: data ? JSON.stringify(data) : undefined
       });
     } catch (error) {
-      console.error(`Failed posting to ${uri}`, { cause: error });
+      console.error(`Failed posting to ${transformedUri}`, { cause: error });
       return;
     }
     if (!response.ok) {
-      console.error(`HTTP error! status: ${response.status} for POST ${uri}`);
+      console.error(`HTTP error! status: ${response.status} for POST ${transformedUri}`);
       return;
     }
     return await response.json();
@@ -62,9 +89,10 @@ export async function post_json(uri: string, data?: any) {
 
 export async function put_json(uri: string, data?: any) {
   try {
+    const transformedUri = transformUrl(uri);
     let response: Response;
     try {
-      response = await fetch(uri, {
+      response = await fetch(transformedUri, {
         method: 'PUT',
         credentials: 'include',
         mode: 'cors',
@@ -74,11 +102,11 @@ export async function put_json(uri: string, data?: any) {
         body: data ? JSON.stringify(data) : undefined
       });
     } catch (error) {
-      console.error(`Failed putting to ${uri}`, { cause: error });
+      console.error(`Failed putting to ${transformedUri}`, { cause: error });
       return;
     }
     if (!response.ok) {
-      console.error(`HTTP error! status: ${response.status} for PUT ${uri}`);
+      console.error(`HTTP error! status: ${response.status} for PUT ${transformedUri}`);
       return;
     }
     return await response.json();
@@ -89,15 +117,16 @@ export async function put_json(uri: string, data?: any) {
 
 export async function get_blob(uri: string) {
   try {
+    const transformedUri = transformUrl(uri);
     let response: Response;
     try {
-      response = await fetch(uri, { method: 'GET', credentials: 'include', mode: 'cors' });
+      response = await fetch(transformedUri, { method: 'GET', credentials: 'include', mode: 'cors' });
     } catch (error) {
-      console.error(`Failed fetching ${uri}`, { cause: error });
+      console.error(`Failed fetching ${transformedUri}`, { cause: error });
       return;
     }
     if (!response.ok) {
-      console.error(`HTTP error! status: ${response.status} for GET ${uri}`);
+      console.error(`HTTP error! status: ${response.status} for GET ${transformedUri}`);
       return;
     }
     return await response.blob();
@@ -108,19 +137,20 @@ export async function get_blob(uri: string) {
 
 export async function delete_json(uri: string) {
   try {
+    const transformedUri = transformUrl(uri);
     let response: Response;
     try {
-      response = await fetch(uri, {
+      response = await fetch(transformedUri, {
         method: 'DELETE',
         credentials: 'include',
         mode: 'cors',
       });
     } catch (error) {
-      console.error(`Failed deleting ${uri}`, { cause: error });
+      console.error(`Failed deleting ${transformedUri}`, { cause: error });
       return;
     }
     if (!response.ok) {
-      console.error(`HTTP error! status: ${response.status} for DELETE ${uri}`);
+      console.error(`HTTP error! status: ${response.status} for DELETE ${transformedUri}`);
       return;
     }
     
@@ -142,9 +172,10 @@ export async function upload_files(files: FileList, targetPath: string = '') {
     // Add target path
     formData.append('target_path', targetPath);
     
+    const uploadUrl = transformUrl('/api/upload');
     let response: Response;
     try {
-      response = await fetch('/api/upload', {
+      response = await fetch(uploadUrl, {
         method: 'POST',
         credentials: 'include',
         mode: 'cors',
@@ -156,7 +187,7 @@ export async function upload_files(files: FileList, targetPath: string = '') {
     }
     
     if (!response.ok) {
-      console.error(`HTTP error! status: ${response.status} for POST /api/upload`);
+      console.error(`HTTP error! status: ${response.status} for POST ${uploadUrl}`);
       return;
     }
     

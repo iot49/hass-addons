@@ -1,14 +1,15 @@
 import logging
 import os
+import re
 import shutil
 import tempfile
 import textwrap
+import urllib.parse
 from fnmatch import fnmatch
 from typing import List
-from urllib.parse import urlparse
 
 from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from markdown import markdown
 from pydantic import BaseModel, DirectoryPath, Field
@@ -105,23 +106,94 @@ app = FastAPI(
 )
 
 
-# Serve the main UI at root
+@app.middleware("http")
+async def route_parser_middleware(request: Request, call_next):
+    """Middleware to handle query parameter routing for ingress compatibility"""
+    route_param = request.query_params.get("route")
+
+    if route_param:
+        # Decode the route parameter
+        decoded_route = urllib.parse.unquote(route_param)
+
+        # Store original path and query params
+        request.state.original_path = request.scope["path"]
+        request.state.original_query_params = request.query_params
+
+        # Create a new request with the decoded route as the path
+        request.scope["path"] = decoded_route
+        request.scope["query_string"] = b""  # Clear query string for internal routing
+
+        print(
+            f"Route middleware: transforming {request.state.original_path}?route={route_param} -> {decoded_route}"
+        )
+
+    return await call_next(request)
+
+
+# New root handler for ingress compatibility
+@app.get("/")
+async def route_handler(request: Request, route: str = None, ui: str = None):
+    """Handle root requests with query parameter routing for ingress compatibility"""
+
+    # Handle static UI assets via 'ui' parameter
+    if ui:
+        static_file_path = os.path.join(UI_DIR, ui)
+
+        if os.path.exists(static_file_path) and os.path.isfile(static_file_path):
+            print(f"Serving static file: {static_file_path}")
+            return FileResponse(static_file_path)
+        else:
+            print(f"Static file not found: {static_file_path}")
+            raise HTTPException(status_code=404, detail="Static file not found")
+
+    # Handle API routes via 'route' parameter (will be processed by middleware)
+    elif route:
+        # This will be handled by the middleware that rewrites the path
+        # Should not reach here due to middleware path rewriting
+        print(f"Route parameter detected but not handled by middleware: {route}")
+        raise HTTPException(status_code=404, detail="Route not found")
+
+    # Default: serve main UI with modified asset URLs
+    else:
+        # Serve main UI with modified asset URLs
+        index_path = os.path.join(UI_DIR, "index.html")
+
+        if not os.path.exists(index_path):
+            raise HTTPException(status_code=404, detail="UI not found")
+
+        # Read and modify HTML content
+        with open(index_path, "r", encoding="utf-8") as f:
+            html_content = f.read()
+
+        # Get the current base path from the request
+        base_path = str(request.url).split("?")[0]
+
+        # Replace asset URLs: /ui/assets/file.js -> ?ui=assets/file.js
+        # Using separate 'ui' parameter for clarity
+        html_content = re.sub(
+            r'(src|href)="(/ui/([^"]*)")', rf'\1="{base_path}?ui=\3"', html_content
+        )
+
+        # Inject base URL configuration for JavaScript
+        base_url_script = f'''
+        <script>
+            window.__INGRESS_BASE_URL__ = "{base_path}";
+        </script>
+        '''
+        html_content = html_content.replace("</head>", f"{base_url_script}</head>")
+
+        print(f"Serving modified index.html with base URL: {base_path}")
+        return HTMLResponse(content=html_content)
+
+
+# Serve the main UI at /file (backward compatibility)
 @app.get("/file")
 async def read_root():
-    """Serve the main UI application"""
+    """Serve the main UI application (backward compatibility)"""
     return FileResponse(f"{UI_DIR}/index.html")
 
 
-@app.get("/{full_path:path}")
-async def catch_all_get(request: Request, full_path: str):
-    # e.g. https://bv.leaf49.org/hassio/ingress/c5db6b11_ingress-fastapi?hello=12345
-    referer = request.headers.get("referer", "")
-    parsed = urlparse(referer)
-    query = parsed.query
-    path = parsed.path
-    return f"path={path}, query={query}, full_path={full_path}"
-
-
+# Keep the static files mount for backward compatibility
 app.mount("/ui", StaticFiles(directory=UI_DIR), name="static")
 
 
