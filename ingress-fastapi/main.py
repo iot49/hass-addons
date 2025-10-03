@@ -147,12 +147,31 @@ async def route_parser_middleware(request: Request, call_next):
 @app.get("/", dependencies=[])
 async def root_with_ui_param(request: Request, ui: str = None):
     """Handle UI asset requests with ui query parameter"""
+    print("=== ROOT HANDLER ENTRY ===")
+    print(f"Request URL: {request.url}")
+    print(f"UI param: {ui}")
+    print(f"All query params: {dict(request.query_params)}")
+
     if ui:
         static_file_path = os.path.join(UI_DIR, ui)
         print("=== UI ASSET HANDLER ===")
         print(f"UI param: {ui}")
+        print(f"UI_DIR: {UI_DIR}")
         print(f"File path: {static_file_path}")
         print(f"File exists: {os.path.exists(static_file_path)}")
+        print(
+            f"Is file: {os.path.isfile(static_file_path) if os.path.exists(static_file_path) else 'N/A'}"
+        )
+
+        # List directory contents for debugging
+        try:
+            ui_dir_contents = os.listdir(UI_DIR)
+            print(f"UI_DIR contents: {ui_dir_contents}")
+            if "assets" in ui_dir_contents:
+                assets_contents = os.listdir(os.path.join(UI_DIR, "assets"))
+                print(f"Assets directory contents: {assets_contents}")
+        except Exception as e:
+            print(f"Error listing directory: {e}")
 
         if os.path.exists(static_file_path) and os.path.isfile(static_file_path):
             # Set correct MIME type based on file extension
@@ -170,6 +189,7 @@ async def root_with_ui_param(request: Request, ui: str = None):
             return FileResponse(static_file_path, media_type=media_type)
         else:
             print(f"ERROR: Static file not found: {static_file_path}")
+            print(f"Current working directory: {os.getcwd()}")
             raise HTTPException(status_code=404, detail="Static file not found")
 
     # If no ui parameter, fall through to main handler
