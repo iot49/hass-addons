@@ -1,9 +1,12 @@
 // URL transformation functions for ingress compatibility
 function isIngressMode(): boolean {
   // Check for ingress-specific indicators
-  return window.location.pathname.includes('/hassio/ingress/') ||
+  // llm shit: '.leaf49.org'
+  let is_ingress = window.location.pathname.includes('/hassio/ingress/') ||
          window.location.hostname.includes('.leaf49.org') ||
          !!(window as any).__INGRESS_BASE_URL__;
+  console.log(`isIngressMode: ${is_ingress}`);
+  return is_ingress;
 }
 
 
@@ -12,12 +15,15 @@ function transformUrl(originalUrl: string): string {
     return originalUrl;
   }
   
+  return `?route=${encodeURIComponent(originalUrl)}`;
+
   // Use relative URL approach for ingress compatibility
   // TODO: explain not all urls start with http
   if (!originalUrl.startsWith('http')) {
     console.log(`Transforming URL for ingress: ${originalUrl}`);
     return `?route=${encodeURIComponent(originalUrl)}`;
   }
+  // 
   console.log(`Not transforming URL for ingress (absolute URL): ${originalUrl}`);
   return originalUrl;
 }
@@ -40,7 +46,6 @@ export async function get_json(uri: string) {
   }
 }
 
-
 export async function get_text(uri: string) {
   try {
     const transformedUri = transformUrl(uri);
@@ -59,6 +64,7 @@ export async function get_text(uri: string) {
   }
 }
 
+/*
 export async function post_json(uri: string, data?: any) {
   try {
     const transformedUri = transformUrl(uri);
@@ -159,7 +165,7 @@ export async function delete_json(uri: string) {
     console.error(`Failed deleting ${uri}`, { cause: error });
   }
 }
-
+*/
 export async function upload_files(files: FileList, targetPath: string = '') {
   try {
     const formData = new FormData();

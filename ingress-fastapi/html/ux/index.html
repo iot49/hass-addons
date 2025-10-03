@@ -5824,18 +5824,15 @@ setDefaultAnimation("dialog.overlay.hide", {
 SlDialog.define("sl-dialog");
 setBasePath("https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.1/cdn/");
 function isIngressMode() {
-  return window.location.pathname.includes("/hassio/ingress/") || window.location.hostname.includes(".leaf49.org") || !!window.__INGRESS_BASE_URL__;
+  let is_ingress = window.location.pathname.includes("/hassio/ingress/") || window.location.hostname.includes(".leaf49.org") || !!window.__INGRESS_BASE_URL__;
+  console.log(`isIngressMode: ${is_ingress}`);
+  return is_ingress;
 }
 function transformUrl(originalUrl) {
   if (!isIngressMode()) {
     return originalUrl;
   }
-  if (!originalUrl.startsWith("http")) {
-    console.log(`Transforming URL for ingress: ${originalUrl}`);
-    return `?route=${encodeURIComponent(originalUrl)}`;
-  }
-  console.log(`Not transforming URL for ingress (absolute URL): ${originalUrl}`);
-  return originalUrl;
+  return `?route=${encodeURIComponent(originalUrl)}`;
 }
 async function get_json(uri) {
   try {
