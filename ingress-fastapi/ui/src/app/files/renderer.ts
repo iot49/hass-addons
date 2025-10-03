@@ -287,21 +287,41 @@ export class FileRenderer {
       originalPath = decodeURIComponent(routeParam);
     }
     
-    // Extract directory from the original API path
-    const currentDir = originalPath.replace('/api/file/', '').split('/').slice(0, -1).join('/');
+    // Extract directory from the original path - handle both /api/file/ and /api/hassio_ingress/ paths
+    let currentDir = '';
+    if (originalPath.startsWith('/api/file/')) {
+      currentDir = originalPath.replace('/api/file/', '').split('/').slice(0, -1).join('/');
+    } else if (originalPath.startsWith('/api/hassio_ingress/')) {
+      currentDir = originalPath.replace('/api/hassio_ingress/', '').split('/').slice(0, -1).join('/');
+    } else {
+      // For other API paths, extract everything after the last /api/ segment
+      const apiMatch = originalPath.match(/\/api\/[^\/]+\/(.+)/);
+      if (apiMatch) {
+        currentDir = apiMatch[1].split('/').slice(0, -1).join('/');
+      }
+    }
+    
+    // Determine the API prefix to use based on the current path
+    let apiPrefix = '/api/file/';
+    if (originalPath.startsWith('/api/hassio_ingress/')) {
+      const ingressMatch = originalPath.match(/\/api\/hassio_ingress\/[^\/]+/);
+      if (ingressMatch) {
+        apiPrefix = ingressMatch[0] + '/';
+      }
+    }
     
     if (relativePath.startsWith('./')) {
       const targetPath = relativePath.substring(2);
-      return currentDir ? `/api/file/${currentDir}/${targetPath}` : `/api/file/${targetPath}`;
+      return currentDir ? `${apiPrefix}${currentDir}/${targetPath}` : `${apiPrefix}${targetPath}`;
     } else if (relativePath.startsWith('../')) {
       const upLevels = (relativePath.match(/\.\.\//g) || []).length;
       const targetPath = relativePath.replace(/\.\.\//g, '');
       const pathParts = currentDir.split('/').filter(part => part.length > 0);
       const newDir = pathParts.slice(0, Math.max(0, pathParts.length - upLevels)).join('/');
-      return newDir ? `/api/file/${newDir}/${targetPath}` : `/api/file/${targetPath}`;
+      return newDir ? `${apiPrefix}${newDir}/${targetPath}` : `${apiPrefix}${targetPath}`;
     } else {
       // Relative to current directory (just filename)
-      return currentDir ? `/api/file/${currentDir}/${relativePath}` : `/api/file/${relativePath}`;
+      return currentDir ? `${apiPrefix}${currentDir}/${relativePath}` : `${apiPrefix}${relativePath}`;
     }
   }
 
