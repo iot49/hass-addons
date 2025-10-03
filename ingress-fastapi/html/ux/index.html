@@ -5996,12 +5996,20 @@ function transformRelativeLinks(markdownContent, currentPath) {
 }
 async function renderMarkdown(filePane, path, renderer) {
   try {
-    const response = await fetch(path);
+    let fetchPath = path;
+    if (path.startsWith("?route=")) {
+      const urlParams = new URLSearchParams(path);
+      const routeParam = urlParams.get("route");
+      if (routeParam) {
+        fetchPath = decodeURIComponent(routeParam);
+      }
+    }
+    const response = await fetch(fetchPath);
     if (!response.ok) {
       throw new Error(`Failed to fetch markdown: ${response.status} ${response.statusText}`);
     }
     const markdownContent = await response.text();
-    const transformedContent = transformRelativeLinks(markdownContent, path);
+    const transformedContent = transformRelativeLinks(markdownContent, fetchPath);
     const contentHtml = `
       <div style="flex: 1; min-height: 0; overflow: auto;">
         <zero-md>

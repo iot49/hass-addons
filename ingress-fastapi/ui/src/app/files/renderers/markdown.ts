@@ -47,16 +47,27 @@ function transformRelativeLinks(markdownContent: string, currentPath: string): s
 
 export async function renderMarkdown(filePane: HTMLDivElement, path: string, renderer: MarkdownRenderer): Promise<void> {
   try {
-    // Fetch the markdown content
-    const response = await fetch(path);
+    // Extract the original API path from the transformed path if needed
+    let fetchPath = path;
+    if (path.startsWith('?route=')) {
+      // Decode the route parameter to get the original path
+      const urlParams = new URLSearchParams(path);
+      const routeParam = urlParams.get('route');
+      if (routeParam) {
+        fetchPath = decodeURIComponent(routeParam);
+      }
+    }
+
+    // Fetch the markdown content using the original API path
+    const response = await fetch(fetchPath);
     if (!response.ok) {
       throw new Error(`Failed to fetch markdown: ${response.status} ${response.statusText}`);
     }
 
     const markdownContent = await response.text();
 
-    // Transform relative links in the markdown content
-    const transformedContent = transformRelativeLinks(markdownContent, path);
+    // Transform relative links in the markdown content using the original path
+    const transformedContent = transformRelativeLinks(markdownContent, fetchPath);
 
     // Create zero-md element with inline content instead of src
     const contentHtml = `
