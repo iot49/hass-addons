@@ -141,7 +141,19 @@ async def route_handler(request: Request, route: str = None, ui: str = None):
 
         if os.path.exists(static_file_path) and os.path.isfile(static_file_path):
             print(f"Serving static file: {static_file_path}")
-            return FileResponse(static_file_path)
+
+            # Set correct MIME type based on file extension
+            media_type = None
+            if static_file_path.endswith(".js"):
+                media_type = "application/javascript"
+            elif static_file_path.endswith(".css"):
+                media_type = "text/css"
+            elif static_file_path.endswith(".html"):
+                media_type = "text/html"
+            elif static_file_path.endswith(".json"):
+                media_type = "application/json"
+
+            return FileResponse(static_file_path, media_type=media_type)
         else:
             print(f"Static file not found: {static_file_path}")
             raise HTTPException(status_code=404, detail="Static file not found")
