@@ -1,6 +1,5 @@
 import logging
 import os
-import re
 import shutil
 import tempfile
 import textwrap
@@ -9,7 +8,7 @@ from fnmatch import fnmatch
 from typing import List
 
 from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
-from fastapi.responses import FileResponse, HTMLResponse
+from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from markdown import markdown
 from pydantic import BaseModel, DirectoryPath, Field
@@ -191,56 +190,15 @@ async def route_handler_main(request: Request):
         # Should not reach here due to middleware path rewriting
         raise HTTPException(status_code=404, detail="Route not found")
 
-    # Default: serve main UI with modified asset URLs
+    # Default: serve main UI as is (no patching required)
     else:
-        # Serve main UI with modified asset URLs
+        # Serve main UI without modification
         index_path = os.path.join(UI_DIR, "index.html")
 
         if not os.path.exists(index_path):
             raise HTTPException(status_code=404, detail="UI not found")
 
-        # Read and modify HTML content
-        with open(index_path, "r", encoding="utf-8") as f:
-            html_content = f.read()
-
-        # Get the current base path from the request, preserving protocol
-        # For ingress, we need the full path including /hassio/ingress/addon_slug
-
-        # Extract base path for ingress compatibility
-
-        # Check if we're running behind ingress
-        ingress_path = request.headers.get("x-ingress-path")
-        forwarded_host = request.headers.get("x-forwarded-host")
-        forwarded_proto = request.headers.get("x-forwarded-proto", "https")
-
-        if ingress_path and forwarded_host:
-            # We're behind Home Assistant ingress
-            base_path = f"{forwarded_proto}://{forwarded_host}{ingress_path}"
-        else:
-            # Fallback to original logic
-            base_path = str(request.url).split("?")[0]
-            # Ensure we preserve HTTPS if the original request was HTTPS
-            if (
-                request.headers.get("x-forwarded-proto") == "https"
-                or request.url.scheme == "https"
-            ):
-                base_path = base_path.replace("http://", "https://")
-
-        # Replace asset URLs: /ui/assets/file.js -> ?ui=assets/file.js
-        # Using separate 'ui' parameter for clarity
-        html_content = re.sub(
-            r'(src|href)="(/ui/([^"]*)")', rf'\1="{base_path}?ui=\3"', html_content
-        )
-
-        # Inject base URL configuration for JavaScript
-        base_url_script = f'''
-        <script>
-            window.__INGRESS_BASE_URL__ = "{base_path}";
-        </script>
-        '''
-        html_content = html_content.replace("</head>", f"{base_url_script}</head>")
-
-        return HTMLResponse(content=html_content)
+        return FileResponse(index_path)
 
 
 # Serve the main UI at /file (backward compatibility)
