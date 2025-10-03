@@ -58749,7 +58749,12 @@ class FileRenderer {
     return originalHref.endsWith(".md") && (originalHref.startsWith("./") || originalHref.startsWith("../") || !originalHref.includes("/") && !originalHref.startsWith("http"));
   }
   resolveRelativePath(relativePath, currentFilePath) {
-    const currentDir = currentFilePath.replace("/api/file/", "").split("/").slice(0, -1).join("/");
+    let originalPath = currentFilePath;
+    if (currentFilePath.startsWith("?route=")) {
+      const routeParam = currentFilePath.substring(7);
+      originalPath = decodeURIComponent(routeParam);
+    }
+    const currentDir = originalPath.replace("/api/file/", "").split("/").slice(0, -1).join("/");
     if (relativePath.startsWith("./")) {
       const targetPath = relativePath.substring(2);
       return currentDir ? `/api/file/${currentDir}/${targetPath}` : `/api/file/${targetPath}`;

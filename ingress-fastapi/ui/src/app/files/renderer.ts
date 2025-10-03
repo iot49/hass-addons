@@ -281,7 +281,17 @@ export class FileRenderer {
   private resolveRelativePath(relativePath: string, currentFilePath: string): string {
     // Convert relative markdown links to absolute API paths
     // Handle cases like ./file.md, ../folder/file.md, file.md
-    const currentDir = currentFilePath.replace('/api/file/', '').split('/').slice(0, -1).join('/');
+    
+    // Extract the original path from the transformed URL if needed
+    let originalPath = currentFilePath;
+    if (currentFilePath.startsWith('?route=')) {
+      // Decode the route parameter to get the original path
+      const routeParam = currentFilePath.substring(7); // Remove '?route='
+      originalPath = decodeURIComponent(routeParam);
+    }
+    
+    // Extract directory from the original API path
+    const currentDir = originalPath.replace('/api/file/', '').split('/').slice(0, -1).join('/');
     
     if (relativePath.startsWith('./')) {
       const targetPath = relativePath.substring(2);
