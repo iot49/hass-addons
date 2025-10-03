@@ -108,16 +108,9 @@ app = FastAPI(
 async def route_parser_middleware(request: Request, call_next):
     """Middleware to handle query parameter routing for ingress compatibility"""
     route_param = request.query_params.get("route")
-    ui_param = request.query_params.get("ui")
 
-    print("=== MIDDLEWARE DEBUG ===")
-    print(f"Original URL: {request.url}")
-    print(f"Original path: {request.scope['path']}")
-    print(f"Query params: {dict(request.query_params)}")
-
-    # Only process route parameter if there's no ui parameter
-    # ui parameter requests should be handled directly by the root handler
-    if route_param and not ui_param:
+    # Process route parameter for ingress compatibility
+    if route_param:
         # Decode the route parameter
         decoded_route = urllib.parse.unquote(route_param)
 
@@ -129,56 +122,15 @@ async def route_parser_middleware(request: Request, call_next):
         request.scope["path"] = decoded_route
         request.scope["query_string"] = b""  # Clear query string for internal routing
 
-        print(f"ROUTE TRANSFORM: '{decoded_route}'")
-        print(f"New path: {request.scope['path']}")
+        logger.info(f"URL transform: {request.scope['path']} -> {decoded_route}")
 
     return await call_next(request)
 
 
-# Specific handler for UI assets with query parameters
-@app.get("/", dependencies=[])
-async def root_with_ui_param(request: Request, ui: str = None):
-    """Handle UI asset requests with ui query parameter"""
-
-    if ui:
-        static_file_path = os.path.join(UI_DIR, ui)
-
-        # List directory contents for debugging
-        try:
-            ui_dir_contents = os.listdir(UI_DIR)
-            print(f"UI_DIR contents: {ui_dir_contents}")
-            if "assets" in ui_dir_contents:
-                assets_contents = os.listdir(os.path.join(UI_DIR, "assets"))
-                print(f"Assets directory contents: {assets_contents}")
-        except Exception as e:
-            print(f"Error listing directory: {e}")
-
-        if os.path.exists(static_file_path) and os.path.isfile(static_file_path):
-            # Set correct MIME type based on file extension
-            media_type = None
-            if static_file_path.endswith(".js"):
-                media_type = "application/javascript"
-            elif static_file_path.endswith(".css"):
-                media_type = "text/css"
-            elif static_file_path.endswith(".html"):
-                media_type = "text/html"
-            elif static_file_path.endswith(".json"):
-                media_type = "application/json"
-
-            print(f"SUCCESS: Serving {static_file_path} with MIME type: {media_type}")
-            return FileResponse(static_file_path, media_type=media_type)
-        else:
-            print(f"ERROR: Static file not found: {static_file_path}")
-            print(f"Current working directory: {os.getcwd()}")
-            raise HTTPException(status_code=404, detail="Static file not found")
-
-    # If no ui parameter, fall through to main handler
-    return await route_handler_main(request)
-
-
 # Main root handler for ingress compatibility
-async def route_handler_main(request: Request):
-    """Handle root requests with query parameter routing for ingress compatibility"""
+@app.get("/", dependencies=[])
+async def root_handler(request: Request):
+    """Handle root requests for ingress compatibility"""
 
     # Get query parameters directly from request
     route_param = request.query_params.get("route")
@@ -189,15 +141,13 @@ async def route_handler_main(request: Request):
         # Should not reach here due to middleware path rewriting
         raise HTTPException(status_code=404, detail="Route not found")
 
-    # Default: serve main UI as is (no patching required)
-    else:
-        # Serve main UI without modification
-        index_path = os.path.join(UI_DIR, "index.html")
+    # Default: serve main UI
+    index_path = os.path.join(UI_DIR, "index.html")
 
-        if not os.path.exists(index_path):
-            raise HTTPException(status_code=404, detail="UI not found")
+    if not os.path.exists(index_path):
+        raise HTTPException(status_code=404, detail="UI not found")
 
-        return FileResponse(index_path)
+    return FileResponse(index_path)
 
 
 """
@@ -326,18 +276,10 @@ async def get_folder(path: str) -> FolderModel:
         GET /api/folder/rv/reports
         - Returns subfolders and files within rv/reports/
     """
-    print("=== GET_FOLDER DEBUG ===")
-    print(f"Received path parameter: '{path}'")
-    print(f"Current working directory: {os.getcwd()}")
-    print(f"DOCS_ROOT: {DOCS_ROOT}")
-
     normalized_path = os.path.normpath(path)
-    print(f"Normalized path: '{normalized_path}'")
-    print(f"Path exists: {os.path.exists(normalized_path)}")
-    print(f"Is directory: {os.path.isdir(normalized_path)}")
 
     if not os.path.isdir(normalized_path):
-        print(f"ERROR: Folder not found - {path}")
+        logger.warning(f"Folder not found: {path}")
         raise HTTPException(status_code=404, detail=f"Folder not found: {path}")
 
     try:

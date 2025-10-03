@@ -226,16 +226,8 @@ export class PwFilesBrowser extends LitElement {
   };
 
   private handlePageShow = (event: PageTransitionEvent) => {
-    console.log('PageShow event in files browser:', {
-      persisted: event.persisted,
-      currentPath: window.location.pathname,
-      selectedFilePath: this.selectedFilePath,
-      hasFileRenderer: !!this.fileRenderer,
-    });
-
     // Handle back/forward cache restoration
     if (event.persisted && this.fileRenderer && this.currentFilePath) {
-      console.log('Syncing file display after pageshow:', this.currentFilePath);
       this.fileRenderer.showFile(this.currentFilePath);
     }
   };
@@ -243,7 +235,6 @@ export class PwFilesBrowser extends LitElement {
   private handlePopState = (event: PopStateEvent) => {
     // Handle back/forward navigation using stored state
     if (event.state?.filePath && this.fileRenderer) {
-      console.log('Showing file after popstate:', event.state.filePath);
       this.fileRenderer.showFile(event.state.filePath);
     }
   };
@@ -340,7 +331,6 @@ export class PwFilesBrowser extends LitElement {
 
     // If selectedFilePath changed, show the new file
     if (changedProperties.has('selectedFilePath') && this.selectedFilePath && this.fileRenderer) {
-      console.log('Showing file due to selectedFilePath change:', this.selectedFilePath);
       this.fileRenderer.showFile(this.selectedFilePath);
     }
   }

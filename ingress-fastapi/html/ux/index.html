@@ -5824,31 +5824,24 @@ setDefaultAnimation("dialog.overlay.hide", {
 SlDialog.define("sl-dialog");
 setBasePath("https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.1/cdn/");
 function transformUrl(url) {
-  console.log(`transformUrl called with: "${url}"`);
-  console.log(`Current window.location.origin: ${window.location.origin}`);
-  console.log(`Current window.location.href: ${window.location.href}`);
   if (isTransformedUrl(url)) {
-    console.log(`URL already transformed, returning as-is: "${url}"`);
     return url;
   }
   if (url.startsWith("http")) {
     try {
       const urlObj = new URL(url);
-      console.log(`Parsed URL object - origin: ${urlObj.origin}, pathname: ${urlObj.pathname}`);
       if (urlObj.origin === window.location.origin) {
         const transformed = `?route=${encodeURIComponent(urlObj.pathname)}`;
-        console.log(`Transformed absolute URL: "${url}" -> "${transformed}"`);
+        console.log(`URL transform: "${url}" -> "${transformed}"`);
         return transformed;
       }
-      console.log(`External URL, no transformation: "${url}"`);
       return url;
     } catch (error) {
-      console.log(`Invalid URL, no transformation: "${url}"`, error);
       return url;
     }
   } else {
     const transformed = `?route=${encodeURIComponent(url)}`;
-    console.log(`Transformed relative URL: "${url}" -> "${transformed}"`);
+    console.log(`URL transform: "${url}" -> "${transformed}"`);
     return transformed;
   }
 }
@@ -58900,21 +58893,13 @@ let PwFilesBrowser = class extends i$2 {
       this.currentFilePath = customEvent.detail.path;
     };
     this.handlePageShow = (event) => {
-      console.log("PageShow event in files browser:", {
-        persisted: event.persisted,
-        currentPath: window.location.pathname,
-        selectedFilePath: this.selectedFilePath,
-        hasFileRenderer: !!this.fileRenderer
-      });
       if (event.persisted && this.fileRenderer && this.currentFilePath) {
-        console.log("Syncing file display after pageshow:", this.currentFilePath);
         this.fileRenderer.showFile(this.currentFilePath);
       }
     };
     this.handlePopState = (event) => {
       var _a2;
       if (((_a2 = event.state) == null ? void 0 : _a2.filePath) && this.fileRenderer) {
-        console.log("Showing file after popstate:", event.state.filePath);
         this.fileRenderer.showFile(event.state.filePath);
       }
     };
@@ -59001,7 +58986,6 @@ let PwFilesBrowser = class extends i$2 {
   updated(changedProperties) {
     super.updated(changedProperties);
     if (changedProperties.has("selectedFilePath") && this.selectedFilePath && this.fileRenderer) {
-      console.log("Showing file due to selectedFilePath change:", this.selectedFilePath);
       this.fileRenderer.showFile(this.selectedFilePath);
     }
   }

@@ -3,37 +3,29 @@
  * Transforms server URLs to ?route= format, leaves external URLs unchanged
  */
 export function transformUrl(url: string): string {
-  console.log(`transformUrl called with: "${url}"`);
-  console.log(`Current window.location.origin: ${window.location.origin}`);
-  console.log(`Current window.location.href: ${window.location.href}`);
-  
   // Check if already transformed to avoid double encoding
   if (isTransformedUrl(url)) {
-    console.log(`URL already transformed, returning as-is: "${url}"`);
     return url;
   }
   
   if (url.startsWith('http')) {
     try {
       const urlObj = new URL(url);
-      console.log(`Parsed URL object - origin: ${urlObj.origin}, pathname: ${urlObj.pathname}`);
       if (urlObj.origin === window.location.origin) {
         const transformed = `?route=${encodeURIComponent(urlObj.pathname)}`;
-        console.log(`Transformed absolute URL: "${url}" -> "${transformed}"`);
+        console.log(`URL transform: "${url}" -> "${transformed}"`);
         return transformed;
       }
       // External URL - leave unchanged
-      console.log(`External URL, no transformation: "${url}"`);
       return url;
     } catch (error) {
       // Invalid URL, no change
-      console.log(`Invalid URL, no transformation: "${url}"`, error);
       return url;
     }
   } else {
     // Relative URL - always transform
     const transformed = `?route=${encodeURIComponent(url)}`;
-    console.log(`Transformed relative URL: "${url}" -> "${transformed}"`);
+    console.log(`URL transform: "${url}" -> "${transformed}"`);
     return transformed;
   }
 }
