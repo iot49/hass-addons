@@ -135,13 +135,20 @@ async def route_parser_middleware(request: Request, call_next):
 
 # New root handler for ingress compatibility
 @app.get("/")
-async def route_handler(request: Request, route: str = None, ui: str = None):
+async def route_handler(request: Request):
     """Handle root requests with query parameter routing for ingress compatibility"""
 
+    # Get query parameters directly from request
+    ui_param = request.query_params.get("ui")
+    route_param = request.query_params.get("route")
+
+    print(f"Root handler called with query params: ui={ui_param}, route={route_param}")
+    print(f"Full URL: {request.url}")
+
     # Handle static UI assets via 'ui' parameter
-    if ui:
-        static_file_path = os.path.join(UI_DIR, ui)
-        print(f"UI parameter request: ui={ui}, full_path={static_file_path}")
+    if ui_param:
+        static_file_path = os.path.join(UI_DIR, ui_param)
+        print(f"UI parameter request: ui={ui_param}, full_path={static_file_path}")
 
         if os.path.exists(static_file_path) and os.path.isfile(static_file_path):
             # Set correct MIME type based on file extension
@@ -164,10 +171,10 @@ async def route_handler(request: Request, route: str = None, ui: str = None):
             raise HTTPException(status_code=404, detail="Static file not found")
 
     # Handle API routes via 'route' parameter (will be processed by middleware)
-    elif route:
+    elif route_param:
         # This will be handled by the middleware that rewrites the path
         # Should not reach here due to middleware path rewriting
-        print(f"Route parameter detected but not handled by middleware: {route}")
+        print(f"Route parameter detected but not handled by middleware: {route_param}")
         raise HTTPException(status_code=404, detail="Route not found")
 
     # Default: serve main UI with modified asset URLs
