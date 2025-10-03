@@ -5840,10 +5840,9 @@ function transformUrl(originalUrl) {
     console.log("Not in ingress mode, returning original URL");
     return originalUrl;
   }
-  const baseUrl = getBaseUrl();
-  if (baseUrl && !originalUrl.startsWith("http")) {
-    const transformedUrl = `${baseUrl}?route=${encodeURIComponent(originalUrl)}`;
-    console.log("Transformed URL:", transformedUrl);
+  if (!originalUrl.startsWith("http")) {
+    const transformedUrl = `?route=${encodeURIComponent(originalUrl)}`;
+    console.log("Transformed URL (relative):", transformedUrl);
     return transformedUrl;
   }
   console.log("No transformation needed, returning original URL");

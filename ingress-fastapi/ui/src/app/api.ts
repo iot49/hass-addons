@@ -23,10 +23,10 @@ function transformUrl(originalUrl: string): string {
     return originalUrl;
   }
   
-  const baseUrl = getBaseUrl();
-  if (baseUrl && !originalUrl.startsWith('http')) {
-    const transformedUrl = `${baseUrl}?route=${encodeURIComponent(originalUrl)}`;
-    console.log('Transformed URL:', transformedUrl);
+  // Try relative URL approach to avoid base path issues
+  if (!originalUrl.startsWith('http')) {
+    const transformedUrl = `?route=${encodeURIComponent(originalUrl)}`;
+    console.log('Transformed URL (relative):', transformedUrl);
     return transformedUrl;
   }
   console.log('No transformation needed, returning original URL');

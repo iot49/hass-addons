@@ -207,6 +207,7 @@ async def route_handler_main(request: Request):
     all_params = dict(request.query_params)
     print("=== ROOT HANDLER DEBUG ===")
     print(f"Full URL: {request.url}")
+    print(f"URL without query: {str(request.url).split('?')[0]}")
     print(f"All query params: {all_params}")
     print(f"Request path: {request.url.path}")
     print(f"Request method: {request.method}")
@@ -242,11 +243,16 @@ async def route_handler_main(request: Request):
 
         print("=== BASE PATH EXTRACTION DEBUG ===")
         print(f"Full request URL: {request.url}")
-        print(f"Request headers: {dict(request.headers)}")
+        print("=== ALL HEADERS ===")
+        for header_name, header_value in request.headers.items():
+            print(f"{header_name}: {header_value}")
+        print("=== KEY HEADERS ===")
         print(f"X-Forwarded-Proto: {request.headers.get('x-forwarded-proto')}")
         print(f"X-Forwarded-Host: {request.headers.get('x-forwarded-host')}")
         print(f"X-Forwarded-For: {request.headers.get('x-forwarded-for')}")
         print(f"X-Ingress-Path: {request.headers.get('x-ingress-path')}")
+        print(f"Referer: {request.headers.get('referer')}")
+        print(f"X-Hass-Source: {request.headers.get('x-hass-source')}")
 
         # Check if we're running behind ingress
         ingress_path = request.headers.get("x-ingress-path")
@@ -305,6 +311,77 @@ async def read_root():
 # Keep the static files mount for backward compatibility - MOVED TO END
 # This should be after all other routes to avoid conflicts
 app.mount("/ui", StaticFiles(directory=UI_DIR), name="static")
+
+
+@app.get(
+    "/api/folder/",
+    response_model=FolderModel,
+    summary="Browse Root Folder Contents",
+    description=dedent_and_convert_to_html(
+        "Retrieve the contents of the root document repository folder"
+    ),
+    responses={
+        200: {
+            "description": "Root folder contents successfully retrieved",
+            "model": FolderModel,
+        },
+        404: {"description": "Root folder not found", "model": ErrorResponse},
+    },
+    tags=["Documents"],
+)
+async def get_root_folder() -> FolderModel:
+    """
+    Browse the contents of the root folder in the document repository.
+
+    Returns a list of subfolders and files within the root path.
+
+    System files and empty folders are automatically filtered out.
+
+    Returns:
+        FolderModel: Root folder structure with subfolders and files
+
+    Raises:
+        HTTPException: 404 if root folder not found
+
+    Example:
+        GET /api/folder/
+        - Returns subfolders and files within the root documents directory
+    """
+    print("=== GET_ROOT_FOLDER DEBUG ===")
+    print(f"Current working directory: {os.getcwd()}")
+    print(f"DOCS_ROOT: {DOCS_ROOT}")
+
+    root_path = "."  # Current directory (which should be DOCS_ROOT)
+    print(f"Root path: '{root_path}'")
+    print(f"Path exists: {os.path.exists(root_path)}")
+    print(f"Is directory: {os.path.isdir(root_path)}")
+
+    if not os.path.isdir(root_path):
+        print("ERROR: Root folder not found")
+        raise HTTPException(status_code=404, detail="Root folder not found")
+
+    try:
+        folders = [
+            folder
+            for folder in os.listdir(root_path)
+            if os.path.isdir(os.path.join(root_path, folder))
+            if not any(fnmatch(folder, p) for p in EXCLUDE_FOLDERS)
+            if not is_folder_empty(os.path.join(root_path, folder))
+        ]
+        files = [
+            file
+            for file in os.listdir(root_path)
+            if os.path.isfile(os.path.join(root_path, file))
+            if not any(fnmatch(file, p) for p in EXCLUDE_FILES)
+        ]
+
+        print(f"Found folders: {folders}")
+        print(f"Found files: {files}")
+
+        return FolderModel(path=root_path, folders=sorted(folders), files=sorted(files))
+    except OSError as e:
+        print(f"ERROR: OSError - {str(e)}")
+        raise HTTPException(status_code=404, detail=f"Not found: {str(e)}")
 
 
 @app.get(
