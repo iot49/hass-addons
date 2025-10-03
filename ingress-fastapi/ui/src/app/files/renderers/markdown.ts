@@ -48,18 +48,27 @@ function transformRelativeLinks(markdownContent: string, currentPath: string): s
 export async function renderMarkdown(filePane: HTMLDivElement, path: string, renderer: MarkdownRenderer): Promise<void> {
   console.log('renderMarkdown called with path:', path);
   try {
-    // Extract the original API path from the transformed path if needed
+    // Determine the correct fetch path and original path for link transformation
     let fetchPath = path;
+    let originalPath = path;
+    
     if (path.startsWith('?route=')) {
-      // Decode the route parameter to get the original path
+      // Path is already transformed - extract original path for link transformation
       const urlParams = new URLSearchParams(path);
       const routeParam = urlParams.get('route');
       if (routeParam) {
-        fetchPath = decodeURIComponent(routeParam);
+        originalPath = decodeURIComponent(routeParam);
+        fetchPath = path; // Use the transformed path for fetching
       }
+    } else {
+      // Path is original API path - transform it for fetching if in ingress mode
+      originalPath = path;
+      fetchPath = transformFileUrl(path);
     }
 
-    // Fetch the markdown content using the original API path
+    console.log('Fetch path:', fetchPath, 'Original path for link transformation:', originalPath);
+
+    // Fetch the markdown content using the appropriate fetch path
     const response = await fetch(fetchPath);
     if (!response.ok) {
       throw new Error(`Failed to fetch markdown: ${response.status} ${response.statusText}`);
@@ -68,7 +77,7 @@ export async function renderMarkdown(filePane: HTMLDivElement, path: string, ren
     const markdownContent = await response.text();
 
     // Transform relative links in the markdown content using the original path
-    const transformedContent = transformRelativeLinks(markdownContent, fetchPath);
+    const transformedContent = transformRelativeLinks(markdownContent, originalPath);
 
     // Create zero-md element with inline content instead of src
     const contentHtml = `

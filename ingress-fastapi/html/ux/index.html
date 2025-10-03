@@ -5998,19 +5998,25 @@ async function renderMarkdown(filePane, path, renderer) {
   console.log("renderMarkdown called with path:", path);
   try {
     let fetchPath = path;
+    let originalPath = path;
     if (path.startsWith("?route=")) {
       const urlParams = new URLSearchParams(path);
       const routeParam = urlParams.get("route");
       if (routeParam) {
-        fetchPath = decodeURIComponent(routeParam);
+        originalPath = decodeURIComponent(routeParam);
+        fetchPath = path;
       }
+    } else {
+      originalPath = path;
+      fetchPath = transformFileUrl(path);
     }
+    console.log("Fetch path:", fetchPath, "Original path for link transformation:", originalPath);
     const response = await fetch(fetchPath);
     if (!response.ok) {
       throw new Error(`Failed to fetch markdown: ${response.status} ${response.statusText}`);
     }
     const markdownContent = await response.text();
-    const transformedContent = transformRelativeLinks(markdownContent, fetchPath);
+    const transformedContent = transformRelativeLinks(markdownContent, originalPath);
     const contentHtml = `
       <div style="flex: 1; min-height: 0; overflow: auto;">
         <zero-md>
