@@ -13,7 +13,7 @@ export function transformUrl(url: string): string {
       const urlObj = new URL(url);
       if (urlObj.origin === window.location.origin) {
         const transformed = `?route=${encodeURIComponent(urlObj.pathname)}`;
-        console.log(`URL transform: "${url}" -> "${transformed}"`);
+        console.log(`URL transform (http): "${url}"`);
         return transformed;
       }
       // External URL - leave unchanged
@@ -25,7 +25,7 @@ export function transformUrl(url: string): string {
   } else {
     // Relative URL - always transform
     const transformed = `?route=${encodeURIComponent(url)}`;
-    console.log(`URL transform: "${url}" -> "${transformed}"`);
+    console.log(`URL transform (relative): "${url}"`);
     return transformed;
   }
 }
@@ -70,25 +70,16 @@ export function handleInternalLinkClick(event: Event, showFileCallback: (path: s
   const link = event.target as HTMLAnchorElement;
   if (!link || !link.href) return false;
   
-  console.log(`[DEBUG] handleInternalLinkClick - link.href: "${link.href}"`);
-  
   // Extract original path from potentially transformed URL
   const targetPath = extractOriginalPath(link.href);
-  console.log(`[DEBUG] handleInternalLinkClick - extracted targetPath: "${targetPath}"`);
   
   // Check if it's a server URL that should be handled internally
-  const isServer = isServerPath(targetPath);
-  console.log(`[DEBUG] handleInternalLinkClick - isServerPath: ${isServer}`);
-  
-  if (isServer) {
+  if (isServerPath(targetPath)) {
     event.preventDefault();
     
     // Update browser URL and history
     const fileDisplayPath = targetPath.replace('/api/file/', '');
-    const transformedPath = transformUrl(targetPath);
-    const state = { filePath: transformedPath };
-    console.log(`[DEBUG] handleInternalLinkClick - fileDisplayPath: "${fileDisplayPath}"`);
-    console.log(`[DEBUG] handleInternalLinkClick - transformedPath for state: "${transformedPath}"`);
+    const state = { filePath: transformUrl(targetPath) };
     window.history.pushState(state, '', `/files/${fileDisplayPath}`);
     
     showFileCallback(targetPath);
