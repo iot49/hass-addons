@@ -215,7 +215,9 @@ async def route_handler_main(request: Request):
             html_content = f.read()
 
         # Get the current base path from the request, preserving protocol
+        # For ingress, we need the full path including /hassio/ingress/addon_slug
         base_path = str(request.url).split("?")[0]
+
         # Ensure we preserve HTTPS if the original request was HTTPS
         if (
             request.headers.get("x-forwarded-proto") == "https"
@@ -223,11 +225,31 @@ async def route_handler_main(request: Request):
         ):
             base_path = base_path.replace("http://", "https://")
 
+        print("=== BASE PATH EXTRACTION DEBUG ===")
+        print(f"Full request URL: {request.url}")
+        print(f"Request headers: {dict(request.headers)}")
+        print(f"Extracted base_path: {base_path}")
+        print(f"X-Forwarded-Proto: {request.headers.get('x-forwarded-proto')}")
+        print(f"X-Forwarded-Host: {request.headers.get('x-forwarded-host')}")
+        print(f"X-Forwarded-For: {request.headers.get('x-forwarded-for')}")
+
         # Replace asset URLs: /ui/assets/file.js -> ?ui=assets/file.js
         # Using separate 'ui' parameter for clarity
+        print("=== URL TRANSFORMATION DEBUG ===")
+        print(f"Original HTML content (first 500 chars): {html_content[:500]}")
+        print(f"Base path: {base_path}")
+
+        # Show what URLs we're transforming
+        original_urls = re.findall(r'(src|href)="(/ui/[^"]*)"', html_content)
+        print(f"Found original URLs to transform: {original_urls}")
+
         html_content = re.sub(
             r'(src|href)="(/ui/([^"]*)")', rf'\1="{base_path}?ui=\3"', html_content
         )
+
+        # Show what URLs we created
+        new_urls = re.findall(r'(src|href)="([^"]*\?ui=[^"]*)"', html_content)
+        print(f"Generated new URLs: {new_urls}")
 
         # Inject base URL configuration for JavaScript
         base_url_script = f'''
@@ -238,6 +260,7 @@ async def route_handler_main(request: Request):
         html_content = html_content.replace("</head>", f"{base_url_script}</head>")
 
         print(f"Serving modified index.html with base URL: {base_path}")
+        print(f"Modified HTML content (first 500 chars): {html_content[:500]}")
         return HTMLResponse(content=html_content)
 
 
