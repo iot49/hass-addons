@@ -203,31 +203,17 @@ async def root_with_ui_param(request: Request, ui: str = None):
 async def route_handler_main(request: Request):
     """Handle root requests with query parameter routing for ingress compatibility"""
 
-    # Get ALL query parameters for debugging
-    all_params = dict(request.query_params)
-    print("=== ROOT HANDLER DEBUG ===")
-    print(f"Full URL: {request.url}")
-    print(f"URL without query: {str(request.url).split('?')[0]}")
-    print(f"All query params: {all_params}")
-    print(f"Request path: {request.url.path}")
-    print(f"Request method: {request.method}")
-
     # Get query parameters directly from request
     route_param = request.query_params.get("route")
 
-    print(f"Extracted route param: {route_param}")
-
     # Handle API routes via 'route' parameter (will be processed by middleware)
     if route_param:
-        print(f"ROUTE REQUEST: route={route_param}")
         # This will be handled by the middleware that rewrites the path
         # Should not reach here due to middleware path rewriting
-        print(f"Route parameter detected but not handled by middleware: {route_param}")
         raise HTTPException(status_code=404, detail="Route not found")
 
     # Default: serve main UI with modified asset URLs
     else:
-        print("DEFAULT REQUEST: Serving main UI")
         # Serve main UI with modified asset URLs
         index_path = os.path.join(UI_DIR, "index.html")
 
@@ -241,18 +227,7 @@ async def route_handler_main(request: Request):
         # Get the current base path from the request, preserving protocol
         # For ingress, we need the full path including /hassio/ingress/addon_slug
 
-        print("=== BASE PATH EXTRACTION DEBUG ===")
-        print(f"Full request URL: {request.url}")
-        print("=== ALL HEADERS ===")
-        for header_name, header_value in request.headers.items():
-            print(f"{header_name}: {header_value}")
-        print("=== KEY HEADERS ===")
-        print(f"X-Forwarded-Proto: {request.headers.get('x-forwarded-proto')}")
-        print(f"X-Forwarded-Host: {request.headers.get('x-forwarded-host')}")
-        print(f"X-Forwarded-For: {request.headers.get('x-forwarded-for')}")
-        print(f"X-Ingress-Path: {request.headers.get('x-ingress-path')}")
-        print(f"Referer: {request.headers.get('referer')}")
-        print(f"X-Hass-Source: {request.headers.get('x-hass-source')}")
+        # Extract base path for ingress compatibility
 
         # Check if we're running behind ingress
         ingress_path = request.headers.get("x-ingress-path")
@@ -262,7 +237,6 @@ async def route_handler_main(request: Request):
         if ingress_path and forwarded_host:
             # We're behind Home Assistant ingress
             base_path = f"{forwarded_proto}://{forwarded_host}{ingress_path}"
-            print("INGRESS MODE: Using ingress path from headers")
         else:
             # Fallback to original logic
             base_path = str(request.url).split("?")[0]
@@ -272,23 +246,12 @@ async def route_handler_main(request: Request):
                 or request.url.scheme == "https"
             ):
                 base_path = base_path.replace("http://", "https://")
-            print("DIRECT MODE: Using request URL")
-
-        print(f"Final base_path: {base_path}")
 
         # Replace asset URLs: /ui/assets/file.js -> ?ui=assets/file.js
         # Using separate 'ui' parameter for clarity
-        # Show what URLs we're transforming
-        original_urls = re.findall(r'(src|href)="(/ui/[^"]*)"', html_content)
-        print(f"Original URLs: {original_urls}")
-
         html_content = re.sub(
             r'(src|href)="(/ui/([^"]*)")', rf'\1="{base_path}?ui=\3"', html_content
         )
-
-        # Show what URLs we created
-        new_urls = re.findall(r'(src|href)="([^"]*\?ui=[^"]*)"', html_content)
-        print(f"Rewritten URLs: {new_urls}")
 
         # Inject base URL configuration for JavaScript
         base_url_script = f'''

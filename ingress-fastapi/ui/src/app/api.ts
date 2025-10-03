@@ -6,54 +6,29 @@ function isIngressMode(): boolean {
          !!(window as any).__INGRESS_BASE_URL__;
 }
 
-function getBaseUrl(): string {
-  return (window as any).__INGRESS_BASE_URL__ || '';
-}
 
 function transformUrl(originalUrl: string): string {
-  console.log('=== URL TRANSFORMATION DEBUG ===');
-  console.log('Original URL:', originalUrl);
-  console.log('Is ingress mode:', isIngressMode());
-  console.log('Base URL:', getBaseUrl());
-  console.log('Window location:', window.location.href);
-  console.log('__INGRESS_BASE_URL__:', (window as any).__INGRESS_BASE_URL__);
-  
   if (!isIngressMode()) {
-    console.log('Not in ingress mode, returning original URL');
     return originalUrl;
   }
   
-  // Try relative URL approach to avoid base path issues
+  // Use relative URL approach for ingress compatibility
   if (!originalUrl.startsWith('http')) {
-    const transformedUrl = `?route=${encodeURIComponent(originalUrl)}`;
-    console.log('Transformed URL (relative):', transformedUrl);
-    return transformedUrl;
+    return `?route=${encodeURIComponent(originalUrl)}`;
   }
-  console.log('No transformation needed, returning original URL');
   return originalUrl;
 }
 
 export async function get_json(uri: string) {
   try {
     const transformedUri = transformUrl(uri);
-    console.log('=== API CALL DEBUG ===');
-    console.log('Original URI:', uri);
-    console.log('Transformed URI:', transformedUri);
-    console.log('Fetch options: { method: "GET", credentials: "include", mode: "cors" }');
-    
     let response: Response;
     try {
       response = await fetch(transformedUri, { method: 'GET', credentials: 'include', mode: 'cors' });
     } catch (error) {
-      console.error('Fetch failed:', error);
       throw new Error(`Failed fetching ${transformedUri}`, { cause: error });
     }
-    
-    console.log('Response status:', response.status);
-    console.log('Response headers:', Object.fromEntries(response.headers.entries()));
-    
     if (!response.ok) {
-      console.error(`HTTP error! status: ${response.status} for ${transformedUri}`);
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     return await response.json();

@@ -12,23 +12,15 @@ function transformFileUrl(originalUrl: string): string {
          window.location.hostname.includes('.leaf49.org') ||
          !!(window as any).__INGRESS_BASE_URL__;
   
-  console.log('=== FILE URL TRANSFORMATION ===');
-  console.log('Original URL:', originalUrl);
-  console.log('Is ingress mode:', isIngressMode);
-  
   if (!isIngressMode) {
-    console.log('Not in ingress mode, returning original URL');
     return originalUrl;
   }
   
   // Transform to relative query parameter format
   if (!originalUrl.startsWith('http')) {
-    const transformedUrl = `?route=${encodeURIComponent(originalUrl)}`;
-    console.log('Transformed file URL:', transformedUrl);
-    return transformedUrl;
+    return `?route=${encodeURIComponent(originalUrl)}`;
   }
   
-  console.log('No transformation needed, returning original URL');
   return originalUrl;
 }
 
@@ -50,12 +42,6 @@ class FolderModel implements FolderModelInterface {
     this.files = files;
   }
 
-  /** Get the last part of the normalized path (name) 
-  get name(): string {
-    const normalizedPath = this.path.replace(/\\/g, '/').replace(/\/+/g, '/');
-    const parts = normalizedPath.split('/');
-    return parts[parts.length - 1];
-  }*/
 }
 
 @customElement('pw-files-browser')
@@ -328,7 +314,6 @@ export class PwFilesBrowser extends LitElement {
           const encodedFilePath = filePathSegments.join('/');
           const dataPath = `/api/file/${encodedFilePath}`;
           const transformedDataPath = transformFileUrl(dataPath);
-          console.log(`pw-files-browser: adding file ${dataPath} -> ${transformedDataPath}`);
 
           // Create icon element
           const icon = document.createElement('sl-icon');

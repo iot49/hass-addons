@@ -5826,46 +5826,25 @@ setBasePath("https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.1/cdn/")
 function isIngressMode() {
   return window.location.pathname.includes("/hassio/ingress/") || window.location.hostname.includes(".leaf49.org") || !!window.__INGRESS_BASE_URL__;
 }
-function getBaseUrl() {
-  return window.__INGRESS_BASE_URL__ || "";
-}
 function transformUrl(originalUrl) {
-  console.log("=== URL TRANSFORMATION DEBUG ===");
-  console.log("Original URL:", originalUrl);
-  console.log("Is ingress mode:", isIngressMode());
-  console.log("Base URL:", getBaseUrl());
-  console.log("Window location:", window.location.href);
-  console.log("__INGRESS_BASE_URL__:", window.__INGRESS_BASE_URL__);
   if (!isIngressMode()) {
-    console.log("Not in ingress mode, returning original URL");
     return originalUrl;
   }
   if (!originalUrl.startsWith("http")) {
-    const transformedUrl = `?route=${encodeURIComponent(originalUrl)}`;
-    console.log("Transformed URL (relative):", transformedUrl);
-    return transformedUrl;
+    return `?route=${encodeURIComponent(originalUrl)}`;
   }
-  console.log("No transformation needed, returning original URL");
   return originalUrl;
 }
 async function get_json(uri) {
   try {
     const transformedUri = transformUrl(uri);
-    console.log("=== API CALL DEBUG ===");
-    console.log("Original URI:", uri);
-    console.log("Transformed URI:", transformedUri);
-    console.log('Fetch options: { method: "GET", credentials: "include", mode: "cors" }');
     let response;
     try {
       response = await fetch(transformedUri, { method: "GET", credentials: "include", mode: "cors" });
     } catch (error) {
-      console.error("Fetch failed:", error);
       throw new Error(`Failed fetching ${transformedUri}`, { cause: error });
     }
-    console.log("Response status:", response.status);
-    console.log("Response headers:", Object.fromEntries(response.headers.entries()));
     if (!response.ok) {
-      console.error(`HTTP error! status: ${response.status} for ${transformedUri}`);
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     return await response.json();
@@ -58783,19 +58762,12 @@ var __decorateClass = (decorators, target, key, kind) => {
 };
 function transformFileUrl(originalUrl) {
   const isIngressMode2 = window.location.pathname.includes("/hassio/ingress/") || window.location.hostname.includes(".leaf49.org") || !!window.__INGRESS_BASE_URL__;
-  console.log("=== FILE URL TRANSFORMATION ===");
-  console.log("Original URL:", originalUrl);
-  console.log("Is ingress mode:", isIngressMode2);
   if (!isIngressMode2) {
-    console.log("Not in ingress mode, returning original URL");
     return originalUrl;
   }
   if (!originalUrl.startsWith("http")) {
-    const transformedUrl = `?route=${encodeURIComponent(originalUrl)}`;
-    console.log("Transformed file URL:", transformedUrl);
-    return transformedUrl;
+    return `?route=${encodeURIComponent(originalUrl)}`;
   }
-  console.log("No transformation needed, returning original URL");
   return originalUrl;
 }
 class FolderModel {
@@ -58804,12 +58776,6 @@ class FolderModel {
     this.folders = folders;
     this.files = files;
   }
-  /** Get the last part of the normalized path (name) 
-  get name(): string {
-    const normalizedPath = this.path.replace(/\\/g, '/').replace(/\/+/g, '/');
-    const parts = normalizedPath.split('/');
-    return parts[parts.length - 1];
-  }*/
 }
 let PwFilesBrowser = class extends i$2 {
   constructor() {
@@ -58890,7 +58856,6 @@ let PwFilesBrowser = class extends i$2 {
           const encodedFilePath = filePathSegments.join("/");
           const dataPath = `/api/file/${encodedFilePath}`;
           const transformedDataPath = transformFileUrl(dataPath);
-          console.log(`pw-files-browser: adding file ${dataPath} -> ${transformedDataPath}`);
           const icon = document.createElement("sl-icon");
           icon.setAttribute("name", iconForFilename(fileName));
           treeItem.appendChild(icon);
