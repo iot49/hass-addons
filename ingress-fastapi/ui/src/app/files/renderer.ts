@@ -21,6 +21,7 @@ export class FileRenderer {
   }
 
   async showFile(path: string | null) {
+    console.log('FileRenderer.showFile called with path:', path);
     if (!path) {
       this.filePane.innerHTML = '<p>No file selected</p>';
       this.currentFilePath = '';
@@ -33,6 +34,7 @@ export class FileRenderer {
       // Extract file extension to determine how to render
       const fileName = path.split('/').pop() || '';
       const extension = fileName.split('.').pop()?.toLowerCase() || '';
+      console.log('File extension detected:', extension, 'for file:', fileName);
 
       // Show loading indicator
       this.filePane.innerHTML = '<sl-spinner></sl-spinner> Loading...';
@@ -41,6 +43,7 @@ export class FileRenderer {
       switch (extension) {
         case 'md':
         case 'qmd':
+          console.log('Calling renderMarkdown for:', path);
           await renderMarkdown(this.filePane, path, this);
           return;
 

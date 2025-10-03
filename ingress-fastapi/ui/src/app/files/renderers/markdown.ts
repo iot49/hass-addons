@@ -46,6 +46,7 @@ function transformRelativeLinks(markdownContent: string, currentPath: string): s
 }
 
 export async function renderMarkdown(filePane: HTMLDivElement, path: string, renderer: MarkdownRenderer): Promise<void> {
+  console.log('renderMarkdown called with path:', path);
   try {
     // Extract the original API path from the transformed path if needed
     let fetchPath = path;

@@ -5995,6 +5995,7 @@ function transformRelativeLinks(markdownContent, currentPath) {
   );
 }
 async function renderMarkdown(filePane, path, renderer) {
+  console.log("renderMarkdown called with path:", path);
   try {
     let fetchPath = path;
     if (path.startsWith("?route=")) {
@@ -58524,6 +58525,7 @@ class FileRenderer {
   }
   async showFile(path) {
     var _a2;
+    console.log("FileRenderer.showFile called with path:", path);
     if (!path) {
       this.filePane.innerHTML = "<p>No file selected</p>";
       this.currentFilePath = "";
@@ -58533,10 +58535,12 @@ class FileRenderer {
     try {
       const fileName = path.split("/").pop() || "";
       const extension = ((_a2 = fileName.split(".").pop()) == null ? void 0 : _a2.toLowerCase()) || "";
+      console.log("File extension detected:", extension, "for file:", fileName);
       this.filePane.innerHTML = "<sl-spinner></sl-spinner> Loading...";
       switch (extension) {
         case "md":
         case "qmd":
+          console.log("Calling renderMarkdown for:", path);
           await renderMarkdown(this.filePane, path, this);
           return;
         // Image file cases
