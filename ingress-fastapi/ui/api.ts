@@ -23,18 +23,13 @@ export async function get_json(uri: string) {
 }
 
 export async function get_text(uri: string) {
-  console.log(`get_text called with uri: ${uri}`);
-  console.log(`Current window.location.href: ${window.location.href}`);
-  console.log(`Current window.location.origin: ${window.location.origin}`);
-  console.log(`Current window.location.pathname: ${window.location.pathname}`);
-  
   try {
     const transformedUri = transformUrl(uri);
     console.log(`transformUrl result: ${transformedUri}`);
     
     // Log how fetch will resolve the URL
     const resolvedUrl = new URL(transformedUri, window.location.href);
-    console.log(`Resolved absolute URL for fetch: ${resolvedUrl.href}`);
+    console.log(`get_text: ${uri} -> ${resolvedUrl.href}`);
     
     let response: Response;
     try {
