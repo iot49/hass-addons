@@ -25,11 +25,7 @@ export async function get_json(uri: string) {
 export async function get_text(uri: string) {
   try {
     const transformedUri = transformUrl(uri);
-    console.log(`transformUrl result: ${transformedUri}`);
-    
-    // Log how fetch will resolve the URL
     const resolvedUrl = new URL(transformedUri, window.location.href);
-    console.log(`get_text: ${uri} -> ${resolvedUrl.href}`);
     
     let response: Response;
     try {

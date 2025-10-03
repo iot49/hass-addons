@@ -5912,9 +5912,7 @@ async function get_json(uri) {
 async function get_text(uri) {
   try {
     const transformedUri = transformUrl(uri);
-    console.log(`transformUrl result: ${transformedUri}`);
     const resolvedUrl = new URL(transformedUri, window.location.href);
-    console.log(`get_text: ${uri} -> ${resolvedUrl.href}`);
     let response;
     try {
       response = await fetch(transformedUri, { method: "GET", credentials: "include", mode: "cors" });
