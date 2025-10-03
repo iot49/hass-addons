@@ -115,16 +115,7 @@ async def route_parser_middleware(request: Request, call_next):
     print("=== MIDDLEWARE DEBUG ===")
     print(f"Original URL: {request.url}")
     print(f"Original path: {request.scope['path']}")
-    print(f"Route param: {route_param}")
-    print(f"UI param: {ui_param}")
-    print(f"Method: {request.method}")
-    print(f"Cookie header: {request.headers.get('cookie', 'None')}")
-    print(f"Authorization header: {request.headers.get('authorization', 'None')}")
-
-    if route_param:
-        print(f"API CALL: {request.url} -> route={route_param}")
-    elif ui_param:
-        print(f"ASSET: {request.url} -> ui={ui_param}")
+    print(f"Query params: {dict(request.query_params)}")
 
     # Only process route parameter if there's no ui parameter
     # ui parameter requests should be handled directly by the root handler
@@ -150,21 +141,9 @@ async def route_parser_middleware(request: Request, call_next):
 @app.get("/", dependencies=[])
 async def root_with_ui_param(request: Request, ui: str = None):
     """Handle UI asset requests with ui query parameter"""
-    print("=== ROOT HANDLER ENTRY ===")
-    print(f"Request URL: {request.url}")
-    print(f"UI param: {ui}")
-    print(f"All query params: {dict(request.query_params)}")
 
     if ui:
         static_file_path = os.path.join(UI_DIR, ui)
-        print("=== UI ASSET HANDLER ===")
-        print(f"UI param: {ui}")
-        print(f"UI_DIR: {UI_DIR}")
-        print(f"File path: {static_file_path}")
-        print(f"File exists: {os.path.exists(static_file_path)}")
-        print(
-            f"Is file: {os.path.isfile(static_file_path) if os.path.exists(static_file_path) else 'N/A'}"
-        )
 
         # List directory contents for debugging
         try:
