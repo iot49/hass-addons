@@ -44,9 +44,7 @@ export class FileRenderer {
       switch (extension) {
         case 'md':
         case 'qmd':
-          // For markdown, pass the original path to zero-md component
-          // The component will make its own fetch request
-          await renderMarkdown(this.filePane, path, this);
+          await renderMarkdown(this.filePane, transformedPath, this);
           break;
 
         // Image file cases

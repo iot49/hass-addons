@@ -24,14 +24,29 @@ export function renderMarkdown(
 ): void {
   const contentHtml = `
     <div style="flex: 1; min-height: 0; overflow: auto;">
-      <zero-md src="${path}"></zero-md>
+      <zero-md src="${path}" no-shadow></zero-md>
     </div>
   `;
   
   setFileContent(filePane, createFileWrapper(contentHtml, path));
-  // Link click handler and HTML transformation handled by renderer.ts
-  // This sets up click handlers for links within the rendered markdown content
-
-  // Question: is this used only for markdown? If so, can this code be moved to markdown.ts?
-  renderer.setupLinkClickHandler();
+  
+  // Wait for zero-md to load, then override its link handling
+  setTimeout(() => {
+    const zeroMdElement = filePane.querySelector('zero-md');
+    if (zeroMdElement && zeroMdElement.shadowRoot) {
+      // Disable zero-md's internal link resolution by overriding its base href
+      const baseElement = zeroMdElement.shadowRoot.querySelector('base');
+      if (baseElement) {
+        baseElement.remove();
+      }
+      
+      // Add a base element that points to current origin to prevent relative resolution
+      const newBase = document.createElement('base');
+      newBase.href = window.location.origin + '/';
+      zeroMdElement.shadowRoot.appendChild(newBase);
+    }
+    
+    // Set up our custom link handlers
+    renderer.setupLinkClickHandler();
+  }, 100);
 }

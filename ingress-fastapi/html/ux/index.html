@@ -6031,11 +6031,23 @@ function setFileContent(filePane, content) {
 function renderMarkdown(filePane, path, renderer) {
   const contentHtml = `
     <div style="flex: 1; min-height: 0; overflow: auto;">
-      <zero-md src="${path}"></zero-md>
+      <zero-md src="${path}" no-shadow></zero-md>
     </div>
   `;
   setFileContent(filePane, createFileWrapper(contentHtml, path));
-  renderer.setupLinkClickHandler();
+  setTimeout(() => {
+    const zeroMdElement = filePane.querySelector("zero-md");
+    if (zeroMdElement && zeroMdElement.shadowRoot) {
+      const baseElement = zeroMdElement.shadowRoot.querySelector("base");
+      if (baseElement) {
+        baseElement.remove();
+      }
+      const newBase = document.createElement("base");
+      newBase.href = window.location.origin + "/";
+      zeroMdElement.shadowRoot.appendChild(newBase);
+    }
+    renderer.setupLinkClickHandler();
+  }, 100);
 }
 function renderImage(filePane, path, fileName) {
   const contentHtml = `
@@ -58549,7 +58561,7 @@ class FileRenderer {
       switch (extension) {
         case "md":
         case "qmd":
-          await renderMarkdown(this.filePane, path, this);
+          await renderMarkdown(this.filePane, transformedPath, this);
           break;
         // Image file cases
         case "jpg":
