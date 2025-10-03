@@ -115,6 +115,8 @@ async def route_parser_middleware(request: Request, call_next):
     print("=== MIDDLEWARE DEBUG ===")
     print(f"Request URL: {request.url}")
     print(f"Request path: {request.url.path}")
+    print(f"Request method: {request.method}")
+    print(f"All query params: {dict(request.query_params)}")
     print(f"Route param: {route_param}")
     print(f"UI param: {ui_param}")
 
@@ -141,30 +143,15 @@ async def route_parser_middleware(request: Request, call_next):
     return await call_next(request)
 
 
-# New root handler for ingress compatibility
-@app.get("/")
-async def route_handler(request: Request):
-    """Handle root requests with query parameter routing for ingress compatibility"""
-
-    # Get ALL query parameters for debugging
-    all_params = dict(request.query_params)
-    print("=== ROOT HANDLER DEBUG ===")
-    print(f"Full URL: {request.url}")
-    print(f"All query params: {all_params}")
-    print(f"Request path: {request.url.path}")
-    print(f"Request method: {request.method}")
-
-    # Get query parameters directly from request
-    ui_param = request.query_params.get("ui")
-    route_param = request.query_params.get("route")
-
-    print(f"Extracted params: ui={ui_param}, route={route_param}")
-
-    # Handle static UI assets via 'ui' parameter - FIRST PRIORITY
-    if ui_param:
-        static_file_path = os.path.join(UI_DIR, ui_param)
-        print(f"UI ASSET REQUEST: ui={ui_param}")
-        print(f"Looking for file: {static_file_path}")
+# Specific handler for UI assets with query parameters
+@app.get("/", dependencies=[])
+async def root_with_ui_param(request: Request, ui: str = None):
+    """Handle UI asset requests with ui query parameter"""
+    if ui:
+        static_file_path = os.path.join(UI_DIR, ui)
+        print("=== UI ASSET HANDLER ===")
+        print(f"UI param: {ui}")
+        print(f"File path: {static_file_path}")
         print(f"File exists: {os.path.exists(static_file_path)}")
 
         if os.path.exists(static_file_path) and os.path.isfile(static_file_path):
@@ -183,19 +170,31 @@ async def route_handler(request: Request):
             return FileResponse(static_file_path, media_type=media_type)
         else:
             print(f"ERROR: Static file not found: {static_file_path}")
-            # List directory contents for debugging
-            try:
-                ui_dir_contents = os.listdir(UI_DIR)
-                print(f"UI_DIR contents: {ui_dir_contents}")
-                if "assets" in ui_dir_contents:
-                    assets_contents = os.listdir(os.path.join(UI_DIR, "assets"))
-                    print(f"Assets directory contents: {assets_contents}")
-            except Exception as e:
-                print(f"Error listing directory: {e}")
             raise HTTPException(status_code=404, detail="Static file not found")
 
+    # If no ui parameter, fall through to main handler
+    return await route_handler_main(request)
+
+
+# Main root handler for ingress compatibility
+async def route_handler_main(request: Request):
+    """Handle root requests with query parameter routing for ingress compatibility"""
+
+    # Get ALL query parameters for debugging
+    all_params = dict(request.query_params)
+    print("=== ROOT HANDLER DEBUG ===")
+    print(f"Full URL: {request.url}")
+    print(f"All query params: {all_params}")
+    print(f"Request path: {request.url.path}")
+    print(f"Request method: {request.method}")
+
+    # Get query parameters directly from request
+    route_param = request.query_params.get("route")
+
+    print(f"Extracted route param: {route_param}")
+
     # Handle API routes via 'route' parameter (will be processed by middleware)
-    elif route_param:
+    if route_param:
         print(f"ROUTE REQUEST: route={route_param}")
         # This will be handled by the middleware that rewrites the path
         # Should not reach here due to middleware path rewriting
