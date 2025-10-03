@@ -112,13 +112,10 @@ async def route_parser_middleware(request: Request, call_next):
     route_param = request.query_params.get("route")
     ui_param = request.query_params.get("ui")
 
-    print("=== MIDDLEWARE DEBUG ===")
-    print(f"Request URL: {request.url}")
-    print(f"Request path: {request.url.path}")
-    print(f"Request method: {request.method}")
-    print(f"All query params: {dict(request.query_params)}")
-    print(f"Route param: {route_param}")
-    print(f"UI param: {ui_param}")
+    if route_param:
+        print(f"API CALL: {request.url} -> route={route_param}")
+    elif ui_param:
+        print(f"ASSET: {request.url} -> ui={ui_param}")
 
     # Only process route parameter if there's no ui parameter
     # ui parameter requests should be handled directly by the root handler
@@ -134,11 +131,7 @@ async def route_parser_middleware(request: Request, call_next):
         request.scope["path"] = decoded_route
         request.scope["query_string"] = b""  # Clear query string for internal routing
 
-        print(
-            f"Route middleware: transforming {request.state.original_path}?route={route_param} -> {decoded_route}"
-        )
-    else:
-        print("Middleware: passing through request unchanged")
+        print(f"ROUTE TRANSFORM: {decoded_route}")
 
     return await call_next(request)
 
@@ -269,13 +262,9 @@ async def route_handler_main(request: Request):
 
         # Replace asset URLs: /ui/assets/file.js -> ?ui=assets/file.js
         # Using separate 'ui' parameter for clarity
-        print("=== URL TRANSFORMATION DEBUG ===")
-        print(f"Original HTML content (first 500 chars): {html_content[:500]}")
-        print(f"Base path: {base_path}")
-
         # Show what URLs we're transforming
         original_urls = re.findall(r'(src|href)="(/ui/[^"]*)"', html_content)
-        print(f"Found original URLs to transform: {original_urls}")
+        print(f"Original URLs: {original_urls}")
 
         html_content = re.sub(
             r'(src|href)="(/ui/([^"]*)")', rf'\1="{base_path}?ui=\3"', html_content
@@ -283,7 +272,7 @@ async def route_handler_main(request: Request):
 
         # Show what URLs we created
         new_urls = re.findall(r'(src|href)="([^"]*\?ui=[^"]*)"', html_content)
-        print(f"Generated new URLs: {new_urls}")
+        print(f"Rewritten URLs: {new_urls}")
 
         # Inject base URL configuration for JavaScript
         base_url_script = f'''
@@ -293,8 +282,6 @@ async def route_handler_main(request: Request):
         '''
         html_content = html_content.replace("</head>", f"{base_url_script}</head>")
 
-        print(f"Serving modified index.html with base URL: {base_path}")
-        print(f"Modified HTML content (first 500 chars): {html_content[:500]}")
         return HTMLResponse(content=html_content)
 
 
