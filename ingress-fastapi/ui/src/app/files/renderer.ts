@@ -22,7 +22,6 @@ export class FileRenderer {
   }
 
   async showFile(path: string | null) {
-    console.log('FileRenderer.showFile called with path:', path);
     if (!path) {
       this.filePane.innerHTML = '<p>No file selected</p>';
       this.currentFilePath = '';
@@ -37,7 +36,6 @@ export class FileRenderer {
       // Extract file extension to determine how to render
       const fileName = path.split('/').pop() || '';
       const extension = fileName.split('.').pop()?.toLowerCase() || '';
-      console.log('File extension detected:', extension, 'for file:', fileName);
 
       // Show loading indicator
       this.filePane.innerHTML = '<sl-spinner></sl-spinner> Loading...';
@@ -225,7 +223,6 @@ export class FileRenderer {
 
     // Find all links in the shadow DOM
     const links = shadowRoot.querySelectorAll('a[href]');
-    // console.log(`Found ${links.length} links in zero-md shadow DOM`);
     
     links.forEach((link) => {
       const anchorLink = link as HTMLAnchorElement;
@@ -233,7 +230,6 @@ export class FileRenderer {
       anchorLink.removeEventListener('click', this.handleLinkClick);
       // Add click listener
       anchorLink.addEventListener('click', this.handleLinkClick);
-      // console.log('Attached click listener to link:', anchorLink.href);
     });
   }
 
