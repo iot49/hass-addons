@@ -5863,11 +5863,18 @@ function isServerPath(path) {
 function handleInternalLinkClick(event, showFileCallback) {
   const link = event.target;
   if (!link || !link.href) return false;
+  console.log(`[DEBUG] handleInternalLinkClick - link.href: "${link.href}"`);
   const targetPath = extractOriginalPath(link.href);
-  if (isServerPath(targetPath)) {
+  console.log(`[DEBUG] handleInternalLinkClick - extracted targetPath: "${targetPath}"`);
+  const isServer = isServerPath(targetPath);
+  console.log(`[DEBUG] handleInternalLinkClick - isServerPath: ${isServer}`);
+  if (isServer) {
     event.preventDefault();
     const fileDisplayPath = targetPath.replace("/api/file/", "");
-    const state = { filePath: transformUrl(targetPath) };
+    const transformedPath = transformUrl(targetPath);
+    const state = { filePath: transformedPath };
+    console.log(`[DEBUG] handleInternalLinkClick - fileDisplayPath: "${fileDisplayPath}"`);
+    console.log(`[DEBUG] handleInternalLinkClick - transformedPath for state: "${transformedPath}"`);
     window.history.pushState(state, "", `/files/${fileDisplayPath}`);
     showFileCallback(targetPath);
     return true;
@@ -58506,24 +58513,33 @@ class FileRenderer {
   constructor(filePane) {
     this.currentFilePath = "";
     this.handleLinkClick = (event) => {
+      const link = event.target;
+      console.log(`[DEBUG] handleLinkClick - link.href: "${link == null ? void 0 : link.href}"`);
+      console.log(`[DEBUG] handleLinkClick - link.getAttribute('href'): "${link == null ? void 0 : link.getAttribute("href")}"`);
+      console.log(`[DEBUG] handleLinkClick - currentFilePath: "${this.currentFilePath}"`);
       if (handleInternalLinkClick(event, (path) => this.showFile(path))) {
+        console.log(`[DEBUG] handleLinkClick - handled by centralized handler`);
         return;
       }
-      const link = event.target;
       if (link && link.href) {
         const url = new URL(link.href);
         let targetPath;
+        console.log(`[DEBUG] handleLinkClick - url.pathname: "${url.pathname}"`);
         if (url.pathname.startsWith("/api/file/")) {
           targetPath = url.pathname;
+          console.log(`[DEBUG] handleLinkClick - using direct API path: "${targetPath}"`);
         } else if (this.isRelativeMarkdownLink(link.href, link)) {
           const originalHref = link.getAttribute("href") || "";
           targetPath = this.resolveRelativePath(originalHref, this.currentFilePath);
+          console.log(`[DEBUG] handleLinkClick - resolved relative path: "${originalHref}" -> "${targetPath}"`);
         } else {
+          console.log(`[DEBUG] handleLinkClick - allowing default behavior for external/non-markdown link`);
           return;
         }
         event.preventDefault();
         const fileDisplayPath = targetPath.replace("/api/file/", "");
         const state = { filePath: transformUrl(targetPath) };
+        console.log(`[DEBUG] handleLinkClick - pushing state with filePath: "${state.filePath}"`);
         window.history.pushState(state, "", `/files/${fileDisplayPath}`);
         this.showFile(targetPath);
       }
@@ -58542,6 +58558,8 @@ class FileRenderer {
     }
     const transformedPath = transformUrl(path);
     this.currentFilePath = transformedPath;
+    console.log(`[DEBUG] showFile - original path: "${path}"`);
+    console.log(`[DEBUG] showFile - transformed path: "${transformedPath}"`);
     try {
       const fileName = path.split("/").pop() || "";
       const extension = ((_a2 = fileName.split(".").pop()) == null ? void 0 : _a2.toLowerCase()) || "";

@@ -70,16 +70,25 @@ export function handleInternalLinkClick(event: Event, showFileCallback: (path: s
   const link = event.target as HTMLAnchorElement;
   if (!link || !link.href) return false;
   
+  console.log(`[DEBUG] handleInternalLinkClick - link.href: "${link.href}"`);
+  
   // Extract original path from potentially transformed URL
   const targetPath = extractOriginalPath(link.href);
+  console.log(`[DEBUG] handleInternalLinkClick - extracted targetPath: "${targetPath}"`);
   
   // Check if it's a server URL that should be handled internally
-  if (isServerPath(targetPath)) {
+  const isServer = isServerPath(targetPath);
+  console.log(`[DEBUG] handleInternalLinkClick - isServerPath: ${isServer}`);
+  
+  if (isServer) {
     event.preventDefault();
     
     // Update browser URL and history
     const fileDisplayPath = targetPath.replace('/api/file/', '');
-    const state = { filePath: transformUrl(targetPath) };
+    const transformedPath = transformUrl(targetPath);
+    const state = { filePath: transformedPath };
+    console.log(`[DEBUG] handleInternalLinkClick - fileDisplayPath: "${fileDisplayPath}"`);
+    console.log(`[DEBUG] handleInternalLinkClick - transformedPath for state: "${transformedPath}"`);
     window.history.pushState(state, '', `/files/${fileDisplayPath}`);
     
     showFileCallback(targetPath);

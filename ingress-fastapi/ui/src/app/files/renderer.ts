@@ -31,6 +31,10 @@ export class FileRenderer {
     // Always transform the path for API calls
     const transformedPath = transformUrl(path);
     this.currentFilePath = transformedPath;
+    
+    // DEBUG: Log path transformations
+    console.log(`[DEBUG] showFile - original path: "${path}"`);
+    console.log(`[DEBUG] showFile - transformed path: "${transformedPath}"`);
 
     try {
       // Extract file extension to determine how to render
@@ -306,24 +310,34 @@ export class FileRenderer {
   }
 
   private handleLinkClick = (event: Event): void => {
+    const link = event.target as HTMLAnchorElement;
+    console.log(`[DEBUG] handleLinkClick - link.href: "${link?.href}"`);
+    console.log(`[DEBUG] handleLinkClick - link.getAttribute('href'): "${link?.getAttribute('href')}"`);
+    console.log(`[DEBUG] handleLinkClick - currentFilePath: "${this.currentFilePath}"`);
+    
     // Use the centralized link click handler
     if (handleInternalLinkClick(event, (path) => this.showFile(path))) {
+      console.log(`[DEBUG] handleLinkClick - handled by centralized handler`);
       return; // Link was handled internally
     }
     
     // Fallback to original logic for compatibility
-    const link = event.target as HTMLAnchorElement;
     if (link && link.href) {
       const url = new URL(link.href);
       let targetPath: string;
       
+      console.log(`[DEBUG] handleLinkClick - url.pathname: "${url.pathname}"`);
+      
       if (url.pathname.startsWith('/api/file/')) {
         targetPath = url.pathname;
+        console.log(`[DEBUG] handleLinkClick - using direct API path: "${targetPath}"`);
       } else if (this.isRelativeMarkdownLink(link.href, link)) {
         const originalHref = link.getAttribute('href') || '';
         targetPath = this.resolveRelativePath(originalHref, this.currentFilePath);
+        console.log(`[DEBUG] handleLinkClick - resolved relative path: "${originalHref}" -> "${targetPath}"`);
       } else {
         // External link or non-markdown link - allow default behavior
+        console.log(`[DEBUG] handleLinkClick - allowing default behavior for external/non-markdown link`);
         return;
       }
       
@@ -333,6 +347,7 @@ export class FileRenderer {
       // Update browser URL and history
       const fileDisplayPath = targetPath.replace('/api/file/', '');
       const state = { filePath: transformUrl(targetPath) };
+      console.log(`[DEBUG] handleLinkClick - pushing state with filePath: "${state.filePath}"`);
       window.history.pushState(state, '', `/files/${fileDisplayPath}`);
       
       // Show the linked file in the current file pane
