@@ -5900,6 +5900,7 @@ async function get_json(uri) {
   }
 }
 async function get_text(uri) {
+  console.log(`get_text ${uri}`);
   try {
     const transformedUri = transformUrl(uri);
     let response;
