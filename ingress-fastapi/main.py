@@ -112,6 +112,12 @@ async def route_parser_middleware(request: Request, call_next):
     route_param = request.query_params.get("route")
     ui_param = request.query_params.get("ui")
 
+    print("=== MIDDLEWARE DEBUG ===")
+    print(f"Request URL: {request.url}")
+    print(f"Request path: {request.url.path}")
+    print(f"Route param: {route_param}")
+    print(f"UI param: {ui_param}")
+
     # Only process route parameter if there's no ui parameter
     # ui parameter requests should be handled directly by the root handler
     if route_param and not ui_param:
@@ -129,6 +135,8 @@ async def route_parser_middleware(request: Request, call_next):
         print(
             f"Route middleware: transforming {request.state.original_path}?route={route_param} -> {decoded_route}"
         )
+    else:
+        print("Middleware: passing through request unchanged")
 
     return await call_next(request)
 
@@ -138,17 +146,26 @@ async def route_parser_middleware(request: Request, call_next):
 async def route_handler(request: Request):
     """Handle root requests with query parameter routing for ingress compatibility"""
 
+    # Get ALL query parameters for debugging
+    all_params = dict(request.query_params)
+    print("=== ROOT HANDLER DEBUG ===")
+    print(f"Full URL: {request.url}")
+    print(f"All query params: {all_params}")
+    print(f"Request path: {request.url.path}")
+    print(f"Request method: {request.method}")
+
     # Get query parameters directly from request
     ui_param = request.query_params.get("ui")
     route_param = request.query_params.get("route")
 
-    print(f"Root handler called with query params: ui={ui_param}, route={route_param}")
-    print(f"Full URL: {request.url}")
+    print(f"Extracted params: ui={ui_param}, route={route_param}")
 
-    # Handle static UI assets via 'ui' parameter
+    # Handle static UI assets via 'ui' parameter - FIRST PRIORITY
     if ui_param:
         static_file_path = os.path.join(UI_DIR, ui_param)
-        print(f"UI parameter request: ui={ui_param}, full_path={static_file_path}")
+        print(f"UI ASSET REQUEST: ui={ui_param}")
+        print(f"Looking for file: {static_file_path}")
+        print(f"File exists: {os.path.exists(static_file_path)}")
 
         if os.path.exists(static_file_path) and os.path.isfile(static_file_path):
             # Set correct MIME type based on file extension
@@ -162,16 +179,24 @@ async def route_handler(request: Request):
             elif static_file_path.endswith(".json"):
                 media_type = "application/json"
 
-            print(
-                f"Serving static file: {static_file_path} with MIME type: {media_type}"
-            )
+            print(f"SUCCESS: Serving {static_file_path} with MIME type: {media_type}")
             return FileResponse(static_file_path, media_type=media_type)
         else:
-            print(f"Static file not found: {static_file_path}")
+            print(f"ERROR: Static file not found: {static_file_path}")
+            # List directory contents for debugging
+            try:
+                ui_dir_contents = os.listdir(UI_DIR)
+                print(f"UI_DIR contents: {ui_dir_contents}")
+                if "assets" in ui_dir_contents:
+                    assets_contents = os.listdir(os.path.join(UI_DIR, "assets"))
+                    print(f"Assets directory contents: {assets_contents}")
+            except Exception as e:
+                print(f"Error listing directory: {e}")
             raise HTTPException(status_code=404, detail="Static file not found")
 
     # Handle API routes via 'route' parameter (will be processed by middleware)
     elif route_param:
+        print(f"ROUTE REQUEST: route={route_param}")
         # This will be handled by the middleware that rewrites the path
         # Should not reach here due to middleware path rewriting
         print(f"Route parameter detected but not handled by middleware: {route_param}")
@@ -179,6 +204,7 @@ async def route_handler(request: Request):
 
     # Default: serve main UI with modified asset URLs
     else:
+        print("DEFAULT REQUEST: Serving main UI")
         # Serve main UI with modified asset URLs
         index_path = os.path.join(UI_DIR, "index.html")
 
@@ -223,7 +249,8 @@ async def read_root():
     return FileResponse(f"{UI_DIR}/index.html")
 
 
-# Keep the static files mount for backward compatibility
+# Keep the static files mount for backward compatibility - MOVED TO END
+# This should be after all other routes to avoid conflicts
 app.mount("/ui", StaticFiles(directory=UI_DIR), name="static")
 
 
