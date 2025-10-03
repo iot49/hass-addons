@@ -165,8 +165,14 @@ async def route_handler(request: Request, route: str = None, ui: str = None):
         with open(index_path, "r", encoding="utf-8") as f:
             html_content = f.read()
 
-        # Get the current base path from the request
+        # Get the current base path from the request, preserving protocol
         base_path = str(request.url).split("?")[0]
+        # Ensure we preserve HTTPS if the original request was HTTPS
+        if (
+            request.headers.get("x-forwarded-proto") == "https"
+            or request.url.scheme == "https"
+        ):
+            base_path = base_path.replace("http://", "https://")
 
         # Replace asset URLs: /ui/assets/file.js -> ?ui=assets/file.js
         # Using separate 'ui' parameter for clarity
