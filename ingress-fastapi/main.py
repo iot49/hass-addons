@@ -110,8 +110,11 @@ app = FastAPI(
 async def route_parser_middleware(request: Request, call_next):
     """Middleware to handle query parameter routing for ingress compatibility"""
     route_param = request.query_params.get("route")
+    ui_param = request.query_params.get("ui")
 
-    if route_param:
+    # Only process route parameter if there's no ui parameter
+    # ui parameter requests should be handled directly by the root handler
+    if route_param and not ui_param:
         # Decode the route parameter
         decoded_route = urllib.parse.unquote(route_param)
 
@@ -138,10 +141,9 @@ async def route_handler(request: Request, route: str = None, ui: str = None):
     # Handle static UI assets via 'ui' parameter
     if ui:
         static_file_path = os.path.join(UI_DIR, ui)
+        print(f"UI parameter request: ui={ui}, full_path={static_file_path}")
 
         if os.path.exists(static_file_path) and os.path.isfile(static_file_path):
-            print(f"Serving static file: {static_file_path}")
-
             # Set correct MIME type based on file extension
             media_type = None
             if static_file_path.endswith(".js"):
@@ -153,6 +155,9 @@ async def route_handler(request: Request, route: str = None, ui: str = None):
             elif static_file_path.endswith(".json"):
                 media_type = "application/json"
 
+            print(
+                f"Serving static file: {static_file_path} with MIME type: {media_type}"
+            )
             return FileResponse(static_file_path, media_type=media_type)
         else:
             print(f"Static file not found: {static_file_path}")
