@@ -5824,19 +5824,36 @@ setDefaultAnimation("dialog.overlay.hide", {
 SlDialog.define("sl-dialog");
 setBasePath("https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.1/cdn/");
 function transformUrl(url) {
+  console.log(`transformUrl called with: "${url}"`);
+  console.log(`Current window.location.origin: ${window.location.origin}`);
+  console.log(`Current window.location.href: ${window.location.href}`);
+  if (isTransformedUrl(url)) {
+    console.log(`URL already transformed, returning as-is: "${url}"`);
+    return url;
+  }
   if (url.startsWith("http")) {
     try {
       const urlObj = new URL(url);
+      console.log(`Parsed URL object - origin: ${urlObj.origin}, pathname: ${urlObj.pathname}`);
       if (urlObj.origin === window.location.origin) {
-        return `?route=${encodeURIComponent(urlObj.pathname)}`;
+        const transformed = `?route=${encodeURIComponent(urlObj.pathname)}`;
+        console.log(`Transformed absolute URL: "${url}" -> "${transformed}"`);
+        return transformed;
       }
+      console.log(`External URL, no transformation: "${url}"`);
       return url;
-    } catch {
+    } catch (error) {
+      console.log(`Invalid URL, no transformation: "${url}"`, error);
       return url;
     }
   } else {
-    return `?route=${encodeURIComponent(url)}`;
+    const transformed = `?route=${encodeURIComponent(url)}`;
+    console.log(`Transformed relative URL: "${url}" -> "${transformed}"`);
+    return transformed;
   }
+}
+function isTransformedUrl(url) {
+  return url.includes("?route=") || url.includes("&route=");
 }
 function extractOriginalPath(url) {
   try {
@@ -5900,16 +5917,24 @@ async function get_json(uri) {
   }
 }
 async function get_text(uri) {
-  console.log(`get_text ${uri}`);
+  console.log(`get_text called with uri: ${uri}`);
+  console.log(`Current window.location.href: ${window.location.href}`);
+  console.log(`Current window.location.origin: ${window.location.origin}`);
+  console.log(`Current window.location.pathname: ${window.location.pathname}`);
   try {
     const transformedUri = transformUrl(uri);
+    console.log(`transformUrl result: ${transformedUri}`);
+    const resolvedUrl = new URL(transformedUri, window.location.href);
+    console.log(`Resolved absolute URL for fetch: ${resolvedUrl.href}`);
     let response;
     try {
       response = await fetch(transformedUri, { method: "GET", credentials: "include", mode: "cors" });
     } catch (error) {
+      console.error(`Fetch failed for ${transformedUri} (resolved to ${resolvedUrl.href})`, error);
       throw new Error(`Failed fetching ${transformedUri}`, { cause: error });
     }
     if (!response.ok) {
+      console.error(`HTTP error! status: ${response.status} for ${transformedUri} (resolved to ${resolvedUrl.href})`);
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     return await response.text();
@@ -59272,6 +59297,15 @@ __decorateClass([
 PwFilesBrowser = __decorateClass([
   t$1("pw-files-browser")
 ], PwFilesBrowser);
+console.log("=== APP STARTUP - BASE URL INFORMATION ===");
+console.log("window.location.href:", window.location.href);
+console.log("window.location.origin:", window.location.origin);
+console.log("window.location.pathname:", window.location.pathname);
+console.log("window.location.search:", window.location.search);
+console.log("window.location.hash:", window.location.hash);
+console.log("document.baseURI:", document.baseURI);
+console.log("import.meta.url:", import.meta.url);
+console.log("=== END BASE URL INFORMATION ===");
 document.title = "Doc";</script>
     <style rel="stylesheet" crossorigin>:root {
   font-family: var(--sl-font-sans);
