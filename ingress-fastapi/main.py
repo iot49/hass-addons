@@ -236,22 +236,36 @@ async def route_handler_main(request: Request):
 
         # Get the current base path from the request, preserving protocol
         # For ingress, we need the full path including /hassio/ingress/addon_slug
-        base_path = str(request.url).split("?")[0]
-
-        # Ensure we preserve HTTPS if the original request was HTTPS
-        if (
-            request.headers.get("x-forwarded-proto") == "https"
-            or request.url.scheme == "https"
-        ):
-            base_path = base_path.replace("http://", "https://")
 
         print("=== BASE PATH EXTRACTION DEBUG ===")
         print(f"Full request URL: {request.url}")
         print(f"Request headers: {dict(request.headers)}")
-        print(f"Extracted base_path: {base_path}")
         print(f"X-Forwarded-Proto: {request.headers.get('x-forwarded-proto')}")
         print(f"X-Forwarded-Host: {request.headers.get('x-forwarded-host')}")
         print(f"X-Forwarded-For: {request.headers.get('x-forwarded-for')}")
+        print(f"X-Ingress-Path: {request.headers.get('x-ingress-path')}")
+
+        # Check if we're running behind ingress
+        ingress_path = request.headers.get("x-ingress-path")
+        forwarded_host = request.headers.get("x-forwarded-host")
+        forwarded_proto = request.headers.get("x-forwarded-proto", "https")
+
+        if ingress_path and forwarded_host:
+            # We're behind Home Assistant ingress
+            base_path = f"{forwarded_proto}://{forwarded_host}{ingress_path}"
+            print("INGRESS MODE: Using ingress path from headers")
+        else:
+            # Fallback to original logic
+            base_path = str(request.url).split("?")[0]
+            # Ensure we preserve HTTPS if the original request was HTTPS
+            if (
+                request.headers.get("x-forwarded-proto") == "https"
+                or request.url.scheme == "https"
+            ):
+                base_path = base_path.replace("http://", "https://")
+            print("DIRECT MODE: Using request URL")
+
+        print(f"Final base_path: {base_path}")
 
         # Replace asset URLs: /ui/assets/file.js -> ?ui=assets/file.js
         # Using separate 'ui' parameter for clarity
