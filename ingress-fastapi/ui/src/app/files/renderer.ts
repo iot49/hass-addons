@@ -179,9 +179,14 @@ export class FileRenderer {
     const observer = new MutationObserver(() => {
       if (zeroMd.shadowRoot) {
         const shadowContent = zeroMd.shadowRoot.innerHTML;
+        console.log(`[DEBUG] observeZeroMdContent - original shadowContent contains:`, shadowContent.includes('generator/index.md') ? 'generator/index.md link found' : 'no generator link');
         const transformedContent = transformHtmlLinks(shadowContent);
+        console.log(`[DEBUG] observeZeroMdContent - transformed shadowContent contains:`, transformedContent.includes('generator/index.md') ? 'generator/index.md link still there' : 'generator link transformed');
         if (transformedContent !== shadowContent) {
+          console.log(`[DEBUG] observeZeroMdContent - applying transformation to shadow DOM`);
           zeroMd.shadowRoot.innerHTML = transformedContent;
+        } else {
+          console.log(`[DEBUG] observeZeroMdContent - no transformation needed`);
         }
         observer.disconnect(); // Stop observing once transformed
       }
@@ -192,9 +197,14 @@ export class FileRenderer {
     // Also check if already rendered
     if (zeroMd.shadowRoot) {
       const shadowContent = zeroMd.shadowRoot.innerHTML;
+      console.log(`[DEBUG] observeZeroMdContent (immediate) - original shadowContent contains:`, shadowContent.includes('generator/index.md') ? 'generator/index.md link found' : 'no generator link');
       const transformedContent = transformHtmlLinks(shadowContent);
+      console.log(`[DEBUG] observeZeroMdContent (immediate) - transformed shadowContent contains:`, transformedContent.includes('generator/index.md') ? 'generator/index.md link still there' : 'generator link transformed');
       if (transformedContent !== shadowContent) {
+        console.log(`[DEBUG] observeZeroMdContent (immediate) - applying transformation to shadow DOM`);
         zeroMd.shadowRoot.innerHTML = transformedContent;
+      } else {
+        console.log(`[DEBUG] observeZeroMdContent (immediate) - no transformation needed`);
       }
     }
   }
@@ -279,6 +289,9 @@ export class FileRenderer {
     // Convert relative markdown links to absolute API paths
     // Handle cases like ./file.md, ../folder/file.md, file.md
     
+    console.log(`[DEBUG] resolveRelativePath - relativePath: "${relativePath}"`);
+    console.log(`[DEBUG] resolveRelativePath - currentFilePath: "${currentFilePath}"`);
+    
     // Extract the original path from the transformed URL if needed
     let originalPath = currentFilePath;
     if (currentFilePath.startsWith('?route=')) {
@@ -286,6 +299,8 @@ export class FileRenderer {
       const routeParam = currentFilePath.substring(7); // Remove '?route='
       originalPath = decodeURIComponent(routeParam);
     }
+    
+    console.log(`[DEBUG] resolveRelativePath - originalPath: "${originalPath}"`);
     
     // Extract directory from the original path - handle both /api/file/ and /api/hassio_ingress/ paths
     let currentDir = '';
@@ -301,6 +316,8 @@ export class FileRenderer {
       }
     }
     
+    console.log(`[DEBUG] resolveRelativePath - currentDir: "${currentDir}"`);
+    
     // Determine the API prefix to use based on the current path
     let apiPrefix = '/api/file/';
     if (originalPath.startsWith('/api/hassio_ingress/')) {
@@ -310,19 +327,25 @@ export class FileRenderer {
       }
     }
     
+    console.log(`[DEBUG] resolveRelativePath - apiPrefix: "${apiPrefix}"`);
+    
+    let result = '';
     if (relativePath.startsWith('./')) {
       const targetPath = relativePath.substring(2);
-      return currentDir ? `${apiPrefix}${currentDir}/${targetPath}` : `${apiPrefix}${targetPath}`;
+      result = currentDir ? `${apiPrefix}${currentDir}/${targetPath}` : `${apiPrefix}${targetPath}`;
     } else if (relativePath.startsWith('../')) {
       const upLevels = (relativePath.match(/\.\.\//g) || []).length;
       const targetPath = relativePath.replace(/\.\.\//g, '');
       const pathParts = currentDir.split('/').filter(part => part.length > 0);
       const newDir = pathParts.slice(0, Math.max(0, pathParts.length - upLevels)).join('/');
-      return newDir ? `${apiPrefix}${newDir}/${targetPath}` : `${apiPrefix}${targetPath}`;
+      result = newDir ? `${apiPrefix}${newDir}/${targetPath}` : `${apiPrefix}${targetPath}`;
     } else {
       // Relative to current directory (just filename)
-      return currentDir ? `${apiPrefix}${currentDir}/${relativePath}` : `${apiPrefix}${relativePath}`;
+      result = currentDir ? `${apiPrefix}${currentDir}/${relativePath}` : `${apiPrefix}${relativePath}`;
     }
+    
+    console.log(`[DEBUG] resolveRelativePath - result: "${result}"`);
+    return result;
   }
 
   private handleLinkClick = (event: Event): void => {
