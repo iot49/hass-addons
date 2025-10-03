@@ -58781,6 +58781,23 @@ var __decorateClass = (decorators, target, key, kind) => {
   if (kind && result) __defProp2(target, key, result);
   return result;
 };
+function transformFileUrl(originalUrl) {
+  const isIngressMode2 = window.location.pathname.includes("/hassio/ingress/") || window.location.hostname.includes(".leaf49.org") || !!window.__INGRESS_BASE_URL__;
+  console.log("=== FILE URL TRANSFORMATION ===");
+  console.log("Original URL:", originalUrl);
+  console.log("Is ingress mode:", isIngressMode2);
+  if (!isIngressMode2) {
+    console.log("Not in ingress mode, returning original URL");
+    return originalUrl;
+  }
+  if (!originalUrl.startsWith("http")) {
+    const transformedUrl = `?route=${encodeURIComponent(originalUrl)}`;
+    console.log("Transformed file URL:", transformedUrl);
+    return transformedUrl;
+  }
+  console.log("No transformation needed, returning original URL");
+  return originalUrl;
+}
 class FolderModel {
   constructor(path, folders = [], files = []) {
     this.path = path;
@@ -58872,13 +58889,14 @@ let PwFilesBrowser = class extends i$2 {
           const filePathSegments = filePath.split("/").map((segment) => encodeURIComponent(segment));
           const encodedFilePath = filePathSegments.join("/");
           const dataPath = `/api/file/${encodedFilePath}`;
-          console.log(`pw-files-browser: adding file ${dataPath}`);
+          const transformedDataPath = transformFileUrl(dataPath);
+          console.log(`pw-files-browser: adding file ${dataPath} -> ${transformedDataPath}`);
           const icon = document.createElement("sl-icon");
           icon.setAttribute("name", iconForFilename(fileName));
           treeItem.appendChild(icon);
           treeItem.appendChild(document.createTextNode(fileName));
           treeItem.className = "file-item";
-          treeItem.setAttribute("data-path", dataPath);
+          treeItem.setAttribute("data-path", transformedDataPath);
           treeItem.addEventListener("click", (event2) => {
             const target2 = event2.target;
             const path2 = target2 == null ? void 0 : target2.getAttribute("data-path");
@@ -58892,7 +58910,7 @@ let PwFilesBrowser = class extends i$2 {
           });
           target.append(treeItem);
           if (fileName === "index.md") {
-            this.fileRenderer.showFile(dataPath);
+            this.fileRenderer.showFile(transformedDataPath);
           }
         }
         target.lazy = false;
@@ -58901,7 +58919,7 @@ let PwFilesBrowser = class extends i$2 {
         target.lazy = false;
       }
     });
-    this.fileRenderer.showFile(`/api/file/index.md`);
+    this.fileRenderer.showFile(transformFileUrl(`/api/file/index.md`));
   }
   updated(changedProperties) {
     super.updated(changedProperties);
@@ -58968,7 +58986,7 @@ let PwFilesBrowser = class extends i$2 {
         <div id="filePane" slot="end">
           <div id="fileContent">Choose file to display ...</div>
           <div id="fileBottomBar">
-            ${this.currentFilePath ? x`<a href="${this.currentFilePath}" target="_blank" style="color: var(--sl-color-primary-600); text-decoration: none;"
+            ${this.currentFilePath ? x`<a href="${transformFileUrl(this.currentFilePath)}" target="_blank" style="color: var(--sl-color-primary-600); text-decoration: none;"
                   >Click here to open the file in a new tab</a
                 >` : "Select a file to view"}
           </div>

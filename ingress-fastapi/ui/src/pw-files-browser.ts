@@ -5,6 +5,33 @@ import { SlTreeItem } from './shoelace-config';
 import { FileRenderer } from './app/files/renderer';
 import { iconForFilename } from './app/files/icons';
 
+// URL transformation function for ingress compatibility
+function transformFileUrl(originalUrl: string): string {
+  // Check for ingress-specific indicators
+  const isIngressMode = window.location.pathname.includes('/hassio/ingress/') ||
+         window.location.hostname.includes('.leaf49.org') ||
+         !!(window as any).__INGRESS_BASE_URL__;
+  
+  console.log('=== FILE URL TRANSFORMATION ===');
+  console.log('Original URL:', originalUrl);
+  console.log('Is ingress mode:', isIngressMode);
+  
+  if (!isIngressMode) {
+    console.log('Not in ingress mode, returning original URL');
+    return originalUrl;
+  }
+  
+  // Transform to relative query parameter format
+  if (!originalUrl.startsWith('http')) {
+    const transformedUrl = `?route=${encodeURIComponent(originalUrl)}`;
+    console.log('Transformed file URL:', transformedUrl);
+    return transformedUrl;
+  }
+  
+  console.log('No transformation needed, returning original URL');
+  return originalUrl;
+}
+
 interface FolderModelInterface {
   path: string;
   folders: string[];
@@ -300,7 +327,8 @@ export class PwFilesBrowser extends LitElement {
           const filePathSegments = filePath.split('/').map((segment: string) => encodeURIComponent(segment));
           const encodedFilePath = filePathSegments.join('/');
           const dataPath = `/api/file/${encodedFilePath}`;
-          console.log(`pw-files-browser: adding file ${dataPath}`);
+          const transformedDataPath = transformFileUrl(dataPath);
+          console.log(`pw-files-browser: adding file ${dataPath} -> ${transformedDataPath}`);
 
           // Create icon element
           const icon = document.createElement('sl-icon');
@@ -311,7 +339,7 @@ export class PwFilesBrowser extends LitElement {
           treeItem.appendChild(document.createTextNode(fileName));
 
           treeItem.className = 'file-item';
-          treeItem.setAttribute('data-path', dataPath);
+          treeItem.setAttribute('data-path', transformedDataPath);
           treeItem.addEventListener('click', (event) => {
             const target = event.target as HTMLElement;
             const path = target?.getAttribute('data-path');
@@ -326,7 +354,7 @@ export class PwFilesBrowser extends LitElement {
           });
           target.append(treeItem);
           if (fileName === 'index.md') {
-            this.fileRenderer.showFile(dataPath);
+            this.fileRenderer.showFile(transformedDataPath);
           }
         }
         target.lazy = false;
@@ -337,7 +365,7 @@ export class PwFilesBrowser extends LitElement {
       }
     });
 
-    this.fileRenderer.showFile(`/api/file/index.md`);
+    this.fileRenderer.showFile(transformFileUrl(`/api/file/index.md`));
   }
 
   protected updated(changedProperties: PropertyValues): void {
@@ -418,7 +446,7 @@ export class PwFilesBrowser extends LitElement {
           <div id="fileContent">Choose file to display ...</div>
           <div id="fileBottomBar">
             ${this.currentFilePath
-              ? html`<a href="${this.currentFilePath}" target="_blank" style="color: var(--sl-color-primary-600); text-decoration: none;"
+              ? html`<a href="${transformFileUrl(this.currentFilePath)}" target="_blank" style="color: var(--sl-color-primary-600); text-decoration: none;"
                   >Click here to open the file in a new tab</a
                 >`
               : 'Select a file to view'}
