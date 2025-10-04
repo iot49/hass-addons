@@ -5848,24 +5848,6 @@ function transformUrl(url) {
 function isTransformedUrl(url) {
   return url.includes("?route=") || url.includes("&route=");
 }
-function transformHtmlLinks(htmlContent) {
-  const parser2 = new DOMParser();
-  const doc = parser2.parseFromString(htmlContent, "text/html");
-  doc.querySelectorAll("a[href]").forEach((link) => {
-    const href = link.getAttribute("href");
-    if (href) {
-      link.setAttribute("href", transformUrl(href));
-    }
-  });
-  doc.querySelectorAll("img[src], script[src], link[href]").forEach((element) => {
-    const attr = element.hasAttribute("src") ? "src" : "href";
-    const url = element.getAttribute(attr);
-    if (url) {
-      element.setAttribute(attr, transformUrl(url));
-    }
-  });
-  return doc.documentElement.innerHTML;
-}
 async function get_json(uri) {
   try {
     const transformedUri = transformUrl(uri);
@@ -58609,7 +58591,6 @@ class FileRenderer {
           await renderFallback(this.filePane, transformedPath);
           break;
       }
-      this.transformRenderedContent();
     } catch (error) {
       console.error("Error loading file:", error);
       this.filePane.innerHTML = `<p>Error loading file: ${error}</p>`;
@@ -58624,76 +58605,36 @@ class FileRenderer {
       }
     });
   }
-  /**
-   * Transform links in all rendered HTML content
-   */
-  transformRenderedContent() {
-    console.log(`[DEBUG] transformRenderedContent - called`);
-    const htmlElements = this.filePane.querySelectorAll("[data-html-content]");
-    console.log(`[DEBUG] transformRenderedContent - found ${htmlElements.length} HTML elements`);
-    htmlElements.forEach((element) => {
-      if (element.innerHTML) {
-        element.innerHTML = transformHtmlLinks(element.innerHTML);
-      }
-    });
-    const zeroMdElements = this.filePane.querySelectorAll("zero-md");
-    console.log(`[DEBUG] transformRenderedContent - found ${zeroMdElements.length} zero-md elements`);
-    zeroMdElements.forEach((zeroMd) => {
-      console.log(`[DEBUG] transformRenderedContent - setting up observer for zero-md element`);
-      this.observeZeroMdContent(zeroMd);
-    });
-  }
-  /**
-   * Observe zero-md content and transform links when ready
-   */
-  observeZeroMdContent(zeroMd) {
-    const observer = new MutationObserver(() => {
-      if (zeroMd.shadowRoot) {
-        const shadowContent = zeroMd.shadowRoot.innerHTML;
-        console.log(`[DEBUG] observeZeroMdContent - original shadowContent contains:`, shadowContent.includes("generator/index.md") ? "generator/index.md link found" : "no generator link");
-        const transformedContent = transformHtmlLinks(shadowContent);
-        console.log(`[DEBUG] observeZeroMdContent - transformed shadowContent contains:`, transformedContent.includes("generator/index.md") ? "generator/index.md link still there" : "generator link transformed");
-        if (transformedContent !== shadowContent) {
-          console.log(`[DEBUG] observeZeroMdContent - applying transformation to shadow DOM`);
-          zeroMd.shadowRoot.innerHTML = transformedContent;
-        } else {
-          console.log(`[DEBUG] observeZeroMdContent - no transformation needed`);
-        }
-        observer.disconnect();
-      }
-    });
-    observer.observe(zeroMd, { childList: true, subtree: true });
-    if (zeroMd.shadowRoot) {
-      const shadowContent = zeroMd.shadowRoot.innerHTML;
-      console.log(`[DEBUG] observeZeroMdContent (immediate) - original shadowContent contains:`, shadowContent.includes("generator/index.md") ? "generator/index.md link found" : "no generator link");
-      const transformedContent = transformHtmlLinks(shadowContent);
-      console.log(`[DEBUG] observeZeroMdContent (immediate) - transformed shadowContent contains:`, transformedContent.includes("generator/index.md") ? "generator/index.md link still there" : "generator link transformed");
-      if (transformedContent !== shadowContent) {
-        console.log(`[DEBUG] observeZeroMdContent (immediate) - applying transformation to shadow DOM`);
-        zeroMd.shadowRoot.innerHTML = transformedContent;
-      } else {
-        console.log(`[DEBUG] observeZeroMdContent (immediate) - no transformation needed`);
-      }
-    }
-  }
   setupLinkClickHandler() {
+    console.log(`[DEBUG] setupLinkClickHandler - called`);
     const zeroMdElements = this.filePane.querySelectorAll("zero-md");
+    console.log(`[DEBUG] setupLinkClickHandler - found ${zeroMdElements.length} zero-md elements`);
     zeroMdElements.forEach((zeroMd) => {
+      console.log(`[DEBUG] setupLinkClickHandler - setting up listeners for zero-md element`);
       zeroMd.addEventListener("zero-md-rendered", () => {
+        console.log(`[DEBUG] setupLinkClickHandler - zero-md-rendered event fired`);
         this.attachLinkListeners(zeroMd);
       });
       if (zeroMd.shadowRoot) {
+        console.log(`[DEBUG] setupLinkClickHandler - shadowRoot already exists, attaching listeners immediately`);
         this.attachLinkListeners(zeroMd);
+      } else {
+        console.log(`[DEBUG] setupLinkClickHandler - shadowRoot does not exist yet, waiting for event`);
       }
       this.observeShadowDOMChanges(zeroMd);
     });
   }
   attachLinkListeners(zeroMd) {
     const shadowRoot = zeroMd.shadowRoot;
-    if (!shadowRoot) return;
+    if (!shadowRoot) {
+      console.log(`[DEBUG] attachLinkListeners - no shadowRoot found`);
+      return;
+    }
     const links = shadowRoot.querySelectorAll("a[href]");
+    console.log(`[DEBUG] attachLinkListeners - found ${links.length} links in shadow DOM`);
     links.forEach((link) => {
       const anchorLink = link;
+      console.log(`[DEBUG] attachLinkListeners - attaching listener to link: "${anchorLink.getAttribute("href")}"`);
       anchorLink.removeEventListener("click", this.handleLinkClick);
       anchorLink.addEventListener("click", this.handleLinkClick);
     });

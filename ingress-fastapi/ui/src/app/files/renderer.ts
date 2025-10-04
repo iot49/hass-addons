@@ -6,7 +6,7 @@ import { renderCode } from './renderers/code';
 import { renderJupyterNotebook } from './renderers/ipynb';
 import { renderHtml } from './renderers/html';
 import { renderFallback } from './renderers/fallback';
-import { transformUrl, transformHtmlLinks } from '../../transformUrl';
+import { transformUrl } from '../../transformUrl';
 
 export class FileRenderer {
   private filePane: HTMLDivElement;
@@ -131,9 +131,6 @@ export class FileRenderer {
           await renderFallback(this.filePane, transformedPath);
           break;
       }
-      
-      // Apply HTML link transformation to all rendered content
-      this.transformRenderedContent();
     } catch (error) {
       console.error('Error loading file:', error);
       this.filePane.innerHTML = `<p>Error loading file: ${error}</p>`;
@@ -152,79 +149,28 @@ export class FileRenderer {
     });
   }
 
-  /**
-   * Transform links in all rendered HTML content
-   */
-  private transformRenderedContent(): void {
-    console.log(`[DEBUG] transformRenderedContent - called`);
-    
-    // Transform direct HTML content
-    const htmlElements = this.filePane.querySelectorAll('[data-html-content]');
-    console.log(`[DEBUG] transformRenderedContent - found ${htmlElements.length} HTML elements`);
-    htmlElements.forEach(element => {
-      if (element.innerHTML) {
-        element.innerHTML = transformHtmlLinks(element.innerHTML);
-      }
-    });
-    
-    // Handle zero-md shadow DOM content
-    const zeroMdElements = this.filePane.querySelectorAll('zero-md');
-    console.log(`[DEBUG] transformRenderedContent - found ${zeroMdElements.length} zero-md elements`);
-    zeroMdElements.forEach(zeroMd => {
-      console.log(`[DEBUG] transformRenderedContent - setting up observer for zero-md element`);
-      // Use MutationObserver to detect when zero-md content is ready
-      this.observeZeroMdContent(zeroMd);
-    });
-  }
 
-  /**
-   * Observe zero-md content and transform links when ready
-   */
-  private observeZeroMdContent(zeroMd: Element): void {
-    const observer = new MutationObserver(() => {
-      if (zeroMd.shadowRoot) {
-        const shadowContent = zeroMd.shadowRoot.innerHTML;
-        console.log(`[DEBUG] observeZeroMdContent - original shadowContent contains:`, shadowContent.includes('generator/index.md') ? 'generator/index.md link found' : 'no generator link');
-        const transformedContent = transformHtmlLinks(shadowContent);
-        console.log(`[DEBUG] observeZeroMdContent - transformed shadowContent contains:`, transformedContent.includes('generator/index.md') ? 'generator/index.md link still there' : 'generator link transformed');
-        if (transformedContent !== shadowContent) {
-          console.log(`[DEBUG] observeZeroMdContent - applying transformation to shadow DOM`);
-          zeroMd.shadowRoot.innerHTML = transformedContent;
-        } else {
-          console.log(`[DEBUG] observeZeroMdContent - no transformation needed`);
-        }
-        observer.disconnect(); // Stop observing once transformed
-      }
-    });
-    
-    observer.observe(zeroMd, { childList: true, subtree: true });
-    
-    // Also check if already rendered
-    if (zeroMd.shadowRoot) {
-      const shadowContent = zeroMd.shadowRoot.innerHTML;
-      console.log(`[DEBUG] observeZeroMdContent (immediate) - original shadowContent contains:`, shadowContent.includes('generator/index.md') ? 'generator/index.md link found' : 'no generator link');
-      const transformedContent = transformHtmlLinks(shadowContent);
-      console.log(`[DEBUG] observeZeroMdContent (immediate) - transformed shadowContent contains:`, transformedContent.includes('generator/index.md') ? 'generator/index.md link still there' : 'generator link transformed');
-      if (transformedContent !== shadowContent) {
-        console.log(`[DEBUG] observeZeroMdContent (immediate) - applying transformation to shadow DOM`);
-        zeroMd.shadowRoot.innerHTML = transformedContent;
-      } else {
-        console.log(`[DEBUG] observeZeroMdContent (immediate) - no transformation needed`);
-      }
-    }
-  }
 
   setupLinkClickHandler(): void {
+    console.log(`[DEBUG] setupLinkClickHandler - called`);
     const zeroMdElements = this.filePane.querySelectorAll('zero-md');
+    console.log(`[DEBUG] setupLinkClickHandler - found ${zeroMdElements.length} zero-md elements`);
+    
     zeroMdElements.forEach((zeroMd) => {
+      console.log(`[DEBUG] setupLinkClickHandler - setting up listeners for zero-md element`);
+      
       // Listen for the zero-md-rendered event to ensure content is loaded
       zeroMd.addEventListener('zero-md-rendered', () => {
+        console.log(`[DEBUG] setupLinkClickHandler - zero-md-rendered event fired`);
         this.attachLinkListeners(zeroMd);
       });
       
       // Also check if it's already rendered
       if (zeroMd.shadowRoot) {
+        console.log(`[DEBUG] setupLinkClickHandler - shadowRoot already exists, attaching listeners immediately`);
         this.attachLinkListeners(zeroMd);
+      } else {
+        console.log(`[DEBUG] setupLinkClickHandler - shadowRoot does not exist yet, waiting for event`);
       }
       
       // Add a mutation observer to watch for changes in the shadow DOM
@@ -234,13 +180,18 @@ export class FileRenderer {
 
   private attachLinkListeners(zeroMd: Element): void {
     const shadowRoot = zeroMd.shadowRoot;
-    if (!shadowRoot) return;
+    if (!shadowRoot) {
+      console.log(`[DEBUG] attachLinkListeners - no shadowRoot found`);
+      return;
+    }
 
     // Find all links in the shadow DOM
     const links = shadowRoot.querySelectorAll('a[href]');
+    console.log(`[DEBUG] attachLinkListeners - found ${links.length} links in shadow DOM`);
     
     links.forEach((link) => {
       const anchorLink = link as HTMLAnchorElement;
+      console.log(`[DEBUG] attachLinkListeners - attaching listener to link: "${anchorLink.getAttribute('href')}"`);
       // Remove existing listeners to avoid duplicates
       anchorLink.removeEventListener('click', this.handleLinkClick);
       // Add click listener
