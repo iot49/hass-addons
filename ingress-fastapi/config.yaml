@@ -1,7 +1,7 @@
 name: "Ingress FastAPI"
 description: >-
   Test Ingress with FastAPI App.
-version: "1.2.53"
+version: "1.2.54"
 slug: "ingress-fastapi"
 init: false
 arch:
