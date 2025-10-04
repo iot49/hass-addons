@@ -26,6 +26,7 @@ export async function get_text(uri: string) {
   try {
     const transformedUri = transformUrl(uri);
     const resolvedUrl = new URL(transformedUri, window.location.href);
+    console.log(`Fetching text from ${uri} -> ${transformedUri} (resolved to ${resolvedUrl.href})`);
     
     let response: Response;
     try {

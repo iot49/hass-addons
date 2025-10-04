@@ -5869,6 +5869,7 @@ async function get_text(uri) {
   try {
     const transformedUri = transformUrl(uri);
     const resolvedUrl = new URL(transformedUri, window.location.href);
+    console.log(`Fetching text from ${uri} -> ${transformedUri} (resolved to ${resolvedUrl.href})`);
     let response;
     try {
       response = await fetch(transformedUri, { method: "GET", credentials: "include", mode: "cors" });
