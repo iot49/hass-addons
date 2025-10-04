@@ -277,7 +277,7 @@ handleclick gets the correct href: [DEBUG] href: "https://bv.leaf49.org/api/hass
             const ingressMatch = currentUrl.match(/(https?:\/\/[^\/]+\/api\/hassio_ingress\/[^\/]+)/);
             if (ingressMatch) {
               const ingressBase = ingressMatch[1];
-              browserUrl = `${ingressBase}${transformUrl(resolvedApiPath)}`;
+              browserUrl = `${ingressBase}/${transformUrl(resolvedApiPath)}`;
             }
           }
 
