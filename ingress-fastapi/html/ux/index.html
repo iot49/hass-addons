@@ -58598,6 +58598,7 @@ class FileRenderer {
   }
   setupLinkClickHandler() {
     const zeroMdElements = this.filePane.querySelectorAll("zero-md");
+    console.log(`[DEBUG] setupLinkClickHandler - found ${zeroMdElements} zero-md elements`);
     zeroMdElements.forEach((zeroMd) => {
       zeroMd.addEventListener("zero-md-rendered", () => {
         this.attachLinkListeners(zeroMd);
@@ -58610,20 +58611,25 @@ class FileRenderer {
   }
   attachLinkListeners(zeroMd) {
     const shadowRoot = zeroMd.shadowRoot;
+    console.log(`[DEBUG] attachLinkListeners - shadowRoot: ${shadowRoot} for zero-md: ${zeroMd}`);
     if (!shadowRoot) return;
     const links = shadowRoot.querySelectorAll("a[href]");
+    console.log(`Found ${links.length} links in zero-md shadow DOM`);
     links.forEach((link) => {
       const anchorLink = link;
       anchorLink.removeEventListener("click", this.handleLinkClick);
       anchorLink.addEventListener("click", this.handleLinkClick);
+      console.log("Attached click listener to link:", anchorLink.href);
     });
   }
   observeShadowDOMChanges(zeroMd) {
     const shadowRoot = zeroMd.shadowRoot;
+    console.log(`[DEBUG] observeShadowDOMChanges - shadowRoot: ${shadowRoot} for zero-md: ${zeroMd}`);
     if (!shadowRoot) return;
     const observer = new MutationObserver((mutations) => {
       let shouldReattach = false;
       mutations.forEach((mutation) => {
+        console.log("[DEBUG] Mutation observed:", mutation);
         if (mutation.type === "childList" && mutation.addedNodes.length > 0) {
           mutation.addedNodes.forEach((node) => {
             if (node.nodeType === Node.ELEMENT_NODE) {

@@ -151,6 +151,7 @@ export class FileRenderer {
 
   setupLinkClickHandler(): void {
     const zeroMdElements = this.filePane.querySelectorAll('zero-md');
+    console.log(`[DEBUG] setupLinkClickHandler - found ${zeroMdElements} zero-md elements`);
     zeroMdElements.forEach((zeroMd) => {
       // Listen for the zero-md-rendered event to ensure content is loaded
       zeroMd.addEventListener('zero-md-rendered', () => {
@@ -169,11 +170,12 @@ export class FileRenderer {
 
   private attachLinkListeners(zeroMd: Element): void {
     const shadowRoot = zeroMd.shadowRoot;
+    console.log(`[DEBUG] attachLinkListeners - shadowRoot: ${shadowRoot} for zero-md: ${zeroMd}`);
     if (!shadowRoot) return;
 
     // Find all links in the shadow DOM
     const links = shadowRoot.querySelectorAll('a[href]');
-    // console.log(`Found ${links.length} links in zero-md shadow DOM`);
+    console.log(`Found ${links.length} links in zero-md shadow DOM`);
 
     links.forEach((link) => {
       const anchorLink = link as HTMLAnchorElement;
@@ -181,18 +183,20 @@ export class FileRenderer {
       anchorLink.removeEventListener('click', this.handleLinkClick);
       // Add click listener
       anchorLink.addEventListener('click', this.handleLinkClick);
-      // console.log('Attached click listener to link:', anchorLink.href);
+      console.log('Attached click listener to link:', anchorLink.href);
     });
   }
 
   private observeShadowDOMChanges(zeroMd: Element): void {
     const shadowRoot = zeroMd.shadowRoot;
+    console.log(`[DEBUG] observeShadowDOMChanges - shadowRoot: ${shadowRoot} for zero-md: ${zeroMd}`);
     if (!shadowRoot) return;
 
     // Create a mutation observer to watch for changes in the shadow DOM
     const observer = new MutationObserver((mutations) => {
       let shouldReattach = false;
       mutations.forEach((mutation) => {
+        console.log('[DEBUG] Mutation observed:', mutation);
         if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
           // Check if any added nodes contain links
           mutation.addedNodes.forEach((node) => {
