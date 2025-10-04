@@ -1,7 +1,7 @@
 name: "Documentation Viewer"
 description: >-
   Serve documentation in /config/docs.
-version: "1.0.1"
+version: "1.0.2"
 slug: "doc-viewer"
 init: false
 arch:
@@ -28,3 +28,5 @@ map:
     read_only: False
     path: /config
 
+panel_title: "Doc Viewer"
+panel_icon: "mdi:file-document"

@@ -227,7 +227,7 @@ handleclick gets the correct href: [DEBUG] href: "https://bv.leaf49.org/api/hass
 
   private handleLinkClick = (event: Event): void => {
     const link = event.target as HTMLAnchorElement;
-    console.log(`[DEBUG] handleLinkClick ${link} - href: "${link?.href}"`);
+    // console.log(`[DEBUG] handleLinkClick ${link} - href: "${link?.href}"`);
     /* if /api/hassio_ingress/ is in link.href
     if (link && link.href && link.href.includes('/api/hassio_ingress/')) {
       transform to ?route=/api/file/<path of md file><link address in md file>
@@ -297,7 +297,7 @@ handleclick gets the correct href: [DEBUG] href: "https://bv.leaf49.org/api/hass
   };
 
   private resolveRelativeMarkdownPath(relativePath: string, currentFilePath: string): string {
-    console.log('[DEBUG] Resolving relative path:', relativePath, 'from current file path:', currentFilePath);
+    // console.log('[DEBUG] Resolving relative path:', relativePath, 'from current file path:', currentFilePath);
     // Extract the original path from the transformed URL if needed
     let originalPath = currentFilePath;
     if (currentFilePath.startsWith('?route=')) {
