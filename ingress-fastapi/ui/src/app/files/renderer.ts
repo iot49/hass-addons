@@ -216,9 +216,26 @@ export class FileRenderer {
     });
   }
 
+  /* 404 error diagnosis
+  zero-md@3?register:1 
+      GET https://bv.leaf49.org/api/file/rv/manuals/generator/index.md?route=%2Fapi%2Ffile%2Frv%2Fmanuals%2Fgenerator%2Findex.md 404 (Not Found)
+ 
+ CORRECT: https://bv.leaf49.org/api/hassio_ingress/nJXxJnCdxkwJNyJ4ABkQdr2_CMsBmHg8InJ-4bjNj9E/?route=%2Fapi%2Ffile%2Frv%2Fmanuals%2Fgenerator%2Findex.md
+
+handleclick gets the correct href: [DEBUG] href: "https://bv.leaf49.org/api/hassio_ingress/nJXxJnCdxkwJNyJ4ABkQdr2_CMsBmHg8InJ-4bjNj9E/generator/index.md"
+*/
+
   private handleLinkClick = (event: Event): void => {
     const link = event.target as HTMLAnchorElement;
-    console.log(`[DEBUG] handleLinkClick ${link} - href: "${link?.href}" origin: "${link?.origin}"`);
+    console.log(`[DEBUG] handleLinkClick ${link} - href: "${link?.href}"`);
+    /* if /api/hassio_ingress/ is in link.href
+    if (link && link.href && link.href.includes('/api/hassio_ingress/')) {
+      transform to ?route=/api/file/<path of md file><link address in md file>
+      since we were called from correct href ?route will be expanded correctly
+      route=%2Fapi%2Ffile%2Frv%2Fmanuals%2Fgenerator%2Findex.md
+      <path of md file>=rv/manuals/
+      <link address>=generator/index.md
+      */
     if (link && link.href) {
       // Check if this is a link to a document file that we should handle internally
       const url = new URL(link.href);
