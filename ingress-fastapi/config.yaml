@@ -1,7 +1,7 @@
 name: "Ingress FastAPI"
 description: >-
   Test Ingress with FastAPI App.
-version: "1.2.51"
+version: "1.2.52"
 slug: "ingress-fastapi"
 init: false
 arch:
@@ -16,10 +16,11 @@ startup: services
 ingress: true
 ingress_port: 8000
 
+# no response ????
 # Not authenticated, but uplodoads work
-webui: "http://[HOST]:[PORT:8000]"
-ports:
-  8000/tcp: 8000
+# webui: "http://[HOST]:[PORT:8000]"
+# ports:
+#   8000/tcp: 8000
 
 # mount /config/doc folder into container
 map:
