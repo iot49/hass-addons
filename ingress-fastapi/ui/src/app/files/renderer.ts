@@ -230,29 +230,57 @@ export class FileRenderer {
     if (link && link.href) {
       // Check if this is a link to a document file that we should handle internally
       const url = new URL(link.href);
-      if (url.pathname.startsWith('/files/api/file/')) {
-        // Prevent default navigation
-        event.preventDefault();
+      console.log(`[DEBUG] handleLinkClick - url.pathname: "${url.pathname}"`);
+      console.log(`[DEBUG] handleLinkClick - url.origin: "${url.origin}"`);
+      
+      // Check if this is an internal link (same origin) that should be handled
+      if (url.origin === window.location.origin) {
+        // Extract the relative path from the link href
+        let relativePath = '';
+        
+        if (url.pathname.startsWith('/api/hassio_ingress/')) {
+          // Extract the file path after the ingress token
+          const ingressMatch = url.pathname.match(/\/api\/hassio_ingress\/[^\/]+\/(.+)/);
+          if (ingressMatch) {
+            relativePath = ingressMatch[1];
+            console.log(`[DEBUG] handleLinkClick - extracted relativePath from ingress: "${relativePath}"`);
+          }
+        } else if (url.pathname.startsWith('/files/api/file/')) {
+          // Legacy pattern support
+          relativePath = url.pathname.replace('/files/api/file/', '');
+          console.log(`[DEBUG] handleLinkClick - extracted relativePath from legacy: "${relativePath}"`);
+        } else if (url.pathname.startsWith('/api/file/')) {
+          // Direct API pattern
+          relativePath = url.pathname.replace('/api/file/', '');
+          console.log(`[DEBUG] handleLinkClick - extracted relativePath from API: "${relativePath}"`);
+        }
 
-        // Extract the file path from the API path (remove /files/api/file prefix)
-        const filePath = url.pathname.replace('/files/api/file', '');
-        // Update the browser URL to use the UI route format with path parameter
-        // const newUrl = `/ui/files${filePath}`;
-        const newUrl = this.resolveRelativeMarkdownPath(filePath, this.currentFilePath);
+        if (relativePath) {
+          // Prevent default navigation
+          event.preventDefault();
 
-        console.log(`[DEBUG] handleLinkClick - filePath: "${filePath}"`);
-        console.log(`[DEBUG] handleLinkClick - currentFilePath: "${this.currentFilePath}"`);
-        console.log(`[DEBUG] handleLinkClick - newUrl: "${newUrl}"`);
+          console.log(`[DEBUG] handleLinkClick - relativePath: "${relativePath}"`);
+          console.log(`[DEBUG] handleLinkClick - currentFilePath: "${this.currentFilePath}"`);
 
-        // Push state with proper history entry
-        const state = {
-          filePath: url.pathname,
-          uiPath: newUrl,
-        };
-        window.history.pushState(state, '', newUrl);
+          // Resolve the full API path for the target file using the existing logic
+          const resolvedApiPath = this.resolveRelativeMarkdownPath(`/api/file/${relativePath}`, this.currentFilePath);
+          console.log(`[DEBUG] handleLinkClick - resolvedApiPath: "${resolvedApiPath}"`);
 
-        // Show the linked file in the current file pane
-        this.showFile(url.pathname);
+          // The browser URL should match the pattern used by the application
+          // Looking at the original code, it was using resolveRelativeMarkdownPath result directly
+          const newUrl = resolvedApiPath;
+          console.log(`[DEBUG] handleLinkClick - newUrl: "${newUrl}"`);
+
+          // Push state with proper history entry
+          const state = {
+            filePath: resolvedApiPath,
+            uiPath: newUrl,
+          };
+          window.history.pushState(state, '', newUrl);
+
+          // Show the linked file in the current file pane
+          this.showFile(resolvedApiPath);
+        }
       }
     }
   };
