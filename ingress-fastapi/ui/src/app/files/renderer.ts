@@ -281,8 +281,6 @@ handleclick gets the correct href: [DEBUG] href: "https://bv.leaf49.org/api/hass
             }
           }
 
-          console.log(`[DEBUG] handleLinkClick - resolvedApiPath: "${resolvedApiPath}"`);
-          console.log(`[DEBUG] handleLinkClick - browserUrl: "${browserUrl}"`);
 
           // Push state with proper history entry
           const state = {

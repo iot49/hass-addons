@@ -24,15 +24,8 @@ export function renderMarkdown(
 ): void {
   // Convert the transformed path to a full absolute URL for zero-md
   const fullUrl = path.startsWith('?')
-    ? `${window.location.origin}${window.location.pathname}${path}`
+    ? new URL(path, window.location.href).href
     : path;
-
-  const resolvedUrl = new URL(path, window.location.href);
-  
-  console.log(`[DEBUG] renderMarkdown - window.location: "${window.location.href}"`);
-  console.log(`[DEBUG] renderMarkdown - path: "${path}"`);
-  console.log(`[DEBUG] renderMarkdown - resolvedUrl: "${resolvedUrl.href}"`);  
-  console.log(`[DEBUG] renderMarkdown - fullUrl: "${fullUrl}"`);
 
   const contentHtml = `
     <div style="flex: 1; min-height: 0; overflow: auto;">

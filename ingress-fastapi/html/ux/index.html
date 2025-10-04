@@ -5987,12 +5987,7 @@ function setFileContent(filePane, content) {
   filePane.innerHTML = content;
 }
 function renderMarkdown(filePane, path, renderer) {
-  const fullUrl = path.startsWith("?") ? `${window.location.origin}${window.location.pathname}${path}` : path;
-  const resolvedUrl = new URL(path, window.location.href);
-  console.log(`[DEBUG] renderMarkdown - window.location: "${window.location.href}"`);
-  console.log(`[DEBUG] renderMarkdown - path: "${path}"`);
-  console.log(`[DEBUG] renderMarkdown - resolvedUrl: "${resolvedUrl.href}"`);
-  console.log(`[DEBUG] renderMarkdown - fullUrl: "${fullUrl}"`);
+  const fullUrl = path.startsWith("?") ? new URL(path, window.location.href).href : path;
   const contentHtml = `
     <div style="flex: 1; min-height: 0; overflow: auto;">
       <zero-md src="${fullUrl}"></zero-md>
@@ -58498,8 +58493,6 @@ class FileRenderer {
                 browserUrl = `${ingressBase}/${transformUrl(resolvedApiPath)}`;
               }
             }
-            console.log(`[DEBUG] handleLinkClick - resolvedApiPath: "${resolvedApiPath}"`);
-            console.log(`[DEBUG] handleLinkClick - browserUrl: "${browserUrl}"`);
             const state = {
               filePath: resolvedApiPath,
               uiPath: browserUrl
