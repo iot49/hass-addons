@@ -58463,34 +58463,25 @@ class FileRenderer {
     this.currentFilePath = "";
     this.handleLinkClick = (event) => {
       const link = event.target;
-      console.log(`[DEBUG] handleLinkClick ${link} - href: "${link == null ? void 0 : link.href}"`);
+      console.log(`[DEBUG] handleLinkClick ${link} - href: "${link == null ? void 0 : link.href}" origin: "${link == null ? void 0 : link.origin}"`);
       if (link && link.href) {
         const url = new URL(link.href);
-        console.log(`[DEBUG] handleLinkClick - url.pathname: "${url.pathname}"`);
-        console.log(`[DEBUG] handleLinkClick - url.origin: "${url.origin}"`);
         if (url.origin === window.location.origin) {
           let relativePath = "";
           if (url.pathname.startsWith("/api/hassio_ingress/")) {
             const ingressMatch = url.pathname.match(/\/api\/hassio_ingress\/[^\/]+\/(.+)/);
             if (ingressMatch) {
               relativePath = ingressMatch[1];
-              console.log(`[DEBUG] handleLinkClick - extracted relativePath from ingress: "${relativePath}"`);
             }
           } else if (url.pathname.startsWith("/files/api/file/")) {
             relativePath = url.pathname.replace("/files/api/file/", "");
-            console.log(`[DEBUG] handleLinkClick - extracted relativePath from legacy: "${relativePath}"`);
           } else if (url.pathname.startsWith("/api/file/")) {
             relativePath = url.pathname.replace("/api/file/", "");
-            console.log(`[DEBUG] handleLinkClick - extracted relativePath from API: "${relativePath}"`);
           }
           if (relativePath) {
             event.preventDefault();
-            console.log(`[DEBUG] handleLinkClick - relativePath: "${relativePath}"`);
-            console.log(`[DEBUG] handleLinkClick - currentFilePath: "${this.currentFilePath}"`);
-            const resolvedApiPath = this.resolveRelativeMarkdownPath(`/api/file/${relativePath}`, this.currentFilePath);
-            console.log(`[DEBUG] handleLinkClick - resolvedApiPath: "${resolvedApiPath}"`);
+            const resolvedApiPath = this.resolveRelativeMarkdownPath(relativePath, this.currentFilePath);
             const newUrl = resolvedApiPath;
-            console.log(`[DEBUG] handleLinkClick - newUrl: "${newUrl}"`);
             const state = {
               filePath: resolvedApiPath,
               uiPath: newUrl
@@ -58617,9 +58608,7 @@ class FileRenderer {
   }
   setupLinkClickHandler() {
     const zeroMdElements = this.filePane.querySelectorAll("zero-md");
-    console.log(`[DEBUG] setupLinkClickHandler - found ${zeroMdElements.length} zero-md elements`);
     zeroMdElements.forEach((zeroMd) => {
-      console.log(`[DEBUG] setupLinkClickHandler - processing zero-md element: ${zeroMd} shadowRoot: ${zeroMd.shadowRoot}`);
       zeroMd.addEventListener("zero-md-rendered", () => {
         this.attachLinkListeners(zeroMd);
       });
@@ -58631,10 +58620,8 @@ class FileRenderer {
   }
   attachLinkListeners(zeroMd) {
     const shadowRoot = zeroMd.shadowRoot;
-    console.log(`[DEBUG] attachLinkListeners - shadowRoot: ${shadowRoot} for zero-md: ${zeroMd}`);
     if (!shadowRoot) return;
     const links = shadowRoot.querySelectorAll("a[href]");
-    console.log(`Found ${links.length} links in zero-md shadow DOM`);
     links.forEach((link) => {
       const anchorLink = link;
       anchorLink.removeEventListener("click", this.handleLinkClick);
@@ -58643,12 +58630,10 @@ class FileRenderer {
   }
   observeShadowDOMChanges(zeroMd) {
     const shadowRoot = zeroMd.shadowRoot;
-    console.log(`[DEBUG] observeShadowDOMChanges - shadowRoot: ${shadowRoot} for zero-md: ${zeroMd}`);
     if (!shadowRoot) return;
     const observer = new MutationObserver((mutations) => {
       let shouldReattach = false;
       mutations.forEach((mutation) => {
-        console.log("[DEBUG] Mutation observed:", mutation);
         if (mutation.type === "childList" && mutation.addedNodes.length > 0) {
           mutation.addedNodes.forEach((node) => {
             if (node.nodeType === Node.ELEMENT_NODE) {
@@ -58661,7 +58646,6 @@ class FileRenderer {
         }
       });
       if (shouldReattach) {
-        console.log("Shadow DOM changed, reattaching link listeners");
         this.attachLinkListeners(zeroMd);
       }
     });
@@ -58671,14 +58655,12 @@ class FileRenderer {
     });
   }
   resolveRelativeMarkdownPath(relativePath, currentFilePath) {
-    console.log(`[DEBUG] resolveRelativeMarkdownPath - relativePath: "${relativePath}"`);
-    console.log(`[DEBUG] resolveRelativeMarkdownPath - currentFilePath: "${currentFilePath}"`);
+    console.log("[DEBUG] Resolving relative path:", relativePath, "from current file path:", currentFilePath);
     let originalPath = currentFilePath;
     if (currentFilePath.startsWith("?route=")) {
       const routeParam = currentFilePath.substring(7);
       originalPath = decodeURIComponent(routeParam);
     }
-    console.log(`[DEBUG] resolveRelativeMarkdownPath - originalPath: "${originalPath}"`);
     let currentDir = "";
     let apiPrefix = "/api/file/";
     if (originalPath.startsWith("/api/file/")) {
@@ -58690,8 +58672,6 @@ class FileRenderer {
         currentDir = ingressMatch[2].split("/").slice(0, -1).join("/");
       }
     }
-    console.log(`[DEBUG] resolveRelativeMarkdownPath - currentDir: "${currentDir}"`);
-    console.log(`[DEBUG] resolveRelativeMarkdownPath - apiPrefix: "${apiPrefix}"`);
     let result = "";
     if (relativePath.startsWith("./")) {
       const targetPath = relativePath.substring(2);
@@ -58705,7 +58685,6 @@ class FileRenderer {
     } else {
       result = currentDir ? `${apiPrefix}${currentDir}/${relativePath}` : `${apiPrefix}${relativePath}`;
     }
-    console.log(`[DEBUG] resolveRelativeMarkdownPath - result: "${result}"`);
     return result;
   }
 }
