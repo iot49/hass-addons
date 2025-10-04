@@ -1,7 +1,7 @@
-name: "Doc Viewer"
+name: "Ingress FastAPI"
 description: >-
   Serve documentation in /config/docs.
-version: "1.8.7"
+version: "1.0.0"
 slug: "doc-viewer"
 init: false
 arch:
@@ -12,18 +12,19 @@ arch:
   - i386
 startup: services
 
+# authenticated by Home Assistant, uploads fail
+ingress: true
+ingress_port: 8099
+
+# no response ????
+# Not authenticated, but uplodoads work
+# webui: "http://[HOST]:[PORT:8000]"
+# ports:
+#   8000/tcp: 8000
+
 # mount /config/doc folder into container
 map:
   - type: homeassistant_config
     read_only: False
     path: /config
 
-# works, but no authentication!
-webui: "http://[HOST]:[PORT:8000]"
-ports:
-  8000/tcp: 8000
-auth_api: true
-
-# hopless can of worms ...
-# ingress: true
-# ingress_port: 8000

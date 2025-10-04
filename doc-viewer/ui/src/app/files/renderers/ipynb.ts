@@ -1,5 +1,5 @@
-import { get_text } from '../../api';
-import { emitFilePathEvent, setFileContent } from './utils';
+import { get_text } from '../../../../api.js';
+import { emitFilePathEvent, setFileContent } from './utils.js';
 
 // Import our local browser-compatible notebookjs
 // @ts-ignore - local JS file without TypeScript declarations

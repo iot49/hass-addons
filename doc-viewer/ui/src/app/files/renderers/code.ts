@@ -1,4 +1,4 @@
-import { get_text } from '../../api';
+import { get_text } from '../../../../api';
 import { createFileWrapper, setFileContent, getLanguageForExtension } from './utils';
 import hljs from 'highlight.js';
 

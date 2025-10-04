@@ -5,7 +5,7 @@ import '../index.css';
 import 'urlpattern-polyfill';
 
 // Set document title from environment variable
-document.title = import.meta.env.VITE_TITLE || 'Doc';
+document.title = import.meta.env.VITE_TITLE || 'Doc Viewer';
 
 // Shoelace configuration - import before components that use it
 import './shoelace-config';

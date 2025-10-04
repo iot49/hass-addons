@@ -1,6 +1,6 @@
 
 
-import { transformUrl } from './src/transformUrl';
+import { transformUrl } from './src/app/transformUrl';
 
 // Replace existing transformUrl function with import
 

@@ -6,6 +6,7 @@ import { renderCode } from './renderers/code';
 import { renderJupyterNotebook } from './renderers/ipynb';
 import { renderHtml } from './renderers/html';
 import { renderFallback } from './renderers/fallback';
+import { transformUrl } from '../transformUrl';
 
 export class FileRenderer {
   private filePane: HTMLDivElement;
@@ -27,7 +28,9 @@ export class FileRenderer {
       return;
     }
 
-    this.currentFilePath = path;
+    // Always transform the path for API calls
+    const transformedPath = transformUrl(path);
+    this.currentFilePath = transformedPath;
 
     try {
       // Extract file extension to determine how to render
@@ -41,8 +44,8 @@ export class FileRenderer {
       switch (extension) {
         case 'md':
         case 'qmd':
-          renderMarkdown(this.filePane, path, this);
-          return;
+          await renderMarkdown(this.filePane, transformedPath, this);
+          break;
 
         // Image file cases
         case 'jpg':
@@ -53,21 +56,21 @@ export class FileRenderer {
         case 'svg':
         case 'webp':
         case 'ico':
-          renderImage(this.filePane, path, fileName);
-          return;
+          renderImage(this.filePane, transformedPath, fileName);
+          break;
 
         case 'pdf':
-          renderPdf(this.filePane, path);
-          return;
+          renderPdf(this.filePane, transformedPath);
+          break;
 
         case 'ipynb':
-          await renderJupyterNotebook(this.filePane, path);
-          return;
+          await renderJupyterNotebook(this.filePane, transformedPath);
+          break;
 
         case 'html':
         case 'htm':
-          renderHtml(this.filePane, path);
-          return;
+          renderHtml(this.filePane, transformedPath);
+          break;
 
         // Audio file cases
         case 'mp3':
@@ -78,8 +81,8 @@ export class FileRenderer {
         case 'flac':
         case 'wma':
         case 'opus':
-          renderAudio(this.filePane, path, fileName, extension);
-          return;
+          renderAudio(this.filePane, transformedPath, fileName, extension);
+          break;
 
         // Code file cases
         case 'js':
@@ -120,12 +123,14 @@ export class FileRenderer {
         case 'dockerfile':
         case 'makefile':
         case 'cmake':
-          await renderCode(this.filePane, path, extension, this);
-          return;
-      }
+          await renderCode(this.filePane, transformedPath, extension, this);
+          break;
 
-      // Fallback for unhandled file types
-      await renderFallback(this.filePane, path);
+        default:
+          // Fallback for unhandled file types
+          await renderFallback(this.filePane, transformedPath);
+          break;
+      }
     } catch (error) {
       console.error('Error loading file:', error);
       this.filePane.innerHTML = `<p>Error loading file: ${error}</p>`;
@@ -151,12 +156,12 @@ export class FileRenderer {
       zeroMd.addEventListener('zero-md-rendered', () => {
         this.attachLinkListeners(zeroMd);
       });
-      
+
       // Also check if it's already rendered
       if (zeroMd.shadowRoot) {
         this.attachLinkListeners(zeroMd);
       }
-      
+
       // Add a mutation observer to watch for changes in the shadow DOM
       this.observeShadowDOMChanges(zeroMd);
     });
@@ -168,15 +173,13 @@ export class FileRenderer {
 
     // Find all links in the shadow DOM
     const links = shadowRoot.querySelectorAll('a[href]');
-    // console.log(`Found ${links.length} links in zero-md shadow DOM`);
-    
+
     links.forEach((link) => {
       const anchorLink = link as HTMLAnchorElement;
       // Remove existing listeners to avoid duplicates
       anchorLink.removeEventListener('click', this.handleLinkClick);
       // Add click listener
       anchorLink.addEventListener('click', this.handleLinkClick);
-      // console.log('Attached click listener to link:', anchorLink.href);
     });
   }
 
@@ -200,9 +203,8 @@ export class FileRenderer {
           });
         }
       });
-      
+
       if (shouldReattach) {
-        console.log('Shadow DOM changed, reattaching link listeners');
         this.attachLinkListeners(zeroMd);
       }
     });
@@ -210,64 +212,129 @@ export class FileRenderer {
     // Start observing
     observer.observe(shadowRoot, {
       childList: true,
-      subtree: true
+      subtree: true,
     });
   }
 
-  private isRelativeMarkdownLink(_href: string, link: HTMLAnchorElement): boolean {
-    const originalHref = link.getAttribute('href') || '';
-    return originalHref.endsWith('.md') &&
-           (originalHref.startsWith('./') ||
-            originalHref.startsWith('../') ||
-            (!originalHref.includes('/') && !originalHref.startsWith('http')));
-  }
+  /* 404 error diagnosis
+  zero-md@3?register:1 
+      GET https://bv.leaf49.org/api/file/rv/manuals/generator/index.md?route=%2Fapi%2Ffile%2Frv%2Fmanuals%2Fgenerator%2Findex.md 404 (Not Found)
+ 
+ CORRECT: https://bv.leaf49.org/api/hassio_ingress/nJXxJnCdxkwJNyJ4ABkQdr2_CMsBmHg8InJ-4bjNj9E/?route=%2Fapi%2Ffile%2Frv%2Fmanuals%2Fgenerator%2Findex.md
 
-  private resolveRelativePath(relativePath: string, currentFilePath: string): string {
-    // Convert relative markdown links to absolute API paths
-    // Handle cases like ./file.md, ../folder/file.md, file.md
-    const currentDir = currentFilePath.replace('/api/file/', '').split('/').slice(0, -1).join('/');
-    
-    if (relativePath.startsWith('./')) {
-      const targetPath = relativePath.substring(2);
-      return currentDir ? `/api/file/${currentDir}/${targetPath}` : `/api/file/${targetPath}`;
-    } else if (relativePath.startsWith('../')) {
-      const upLevels = (relativePath.match(/\.\.\//g) || []).length;
-      const targetPath = relativePath.replace(/\.\.\//g, '');
-      const pathParts = currentDir.split('/').filter(part => part.length > 0);
-      const newDir = pathParts.slice(0, Math.max(0, pathParts.length - upLevels)).join('/');
-      return newDir ? `/api/file/${newDir}/${targetPath}` : `/api/file/${targetPath}`;
-    } else {
-      // Relative to current directory (just filename)
-      return currentDir ? `/api/file/${currentDir}/${relativePath}` : `/api/file/${relativePath}`;
-    }
-  }
+handleclick gets the correct href: [DEBUG] href: "https://bv.leaf49.org/api/hassio_ingress/nJXxJnCdxkwJNyJ4ABkQdr2_CMsBmHg8InJ-4bjNj9E/generator/index.md"
+*/
 
   private handleLinkClick = (event: Event): void => {
     const link = event.target as HTMLAnchorElement;
+    console.log(`[DEBUG] handleLinkClick ${link} - href: "${link?.href}"`);
+    /* if /api/hassio_ingress/ is in link.href
+    if (link && link.href && link.href.includes('/api/hassio_ingress/')) {
+      transform to ?route=/api/file/<path of md file><link address in md file>
+      since we were called from correct href ?route will be expanded correctly
+      route=%2Fapi%2Ffile%2Frv%2Fmanuals%2Fgenerator%2Findex.md
+      <path of md file>=rv/manuals/
+      <link address>=generator/index.md
+      */
     if (link && link.href) {
+      // Check if this is a link to a document file that we should handle internally
       const url = new URL(link.href);
-      let targetPath: string;
       
-      if (url.pathname.startsWith('/api/file/')) {
-        targetPath = url.pathname;
-      } else if (this.isRelativeMarkdownLink(link.href, link)) {
-        const originalHref = link.getAttribute('href') || '';
-        targetPath = this.resolveRelativePath(originalHref, this.currentFilePath);
-      } else {
-        // External link or non-markdown link - allow default behavior
-        return;
+      // Check if this is an internal link (same origin) that should be handled
+      if (url.origin === window.location.origin) {
+        // Extract the relative path from the link href
+        let relativePath = '';
+        
+        if (url.pathname.startsWith('/api/hassio_ingress/')) {
+          // Extract the file path after the ingress token
+          const ingressMatch = url.pathname.match(/\/api\/hassio_ingress\/[^\/]+\/(.+)/);
+          if (ingressMatch) {
+            relativePath = ingressMatch[1];
+          }
+        } else if (url.pathname.startsWith('/files/api/file/')) {
+          // Legacy pattern support
+          relativePath = url.pathname.replace('/files/api/file/', '');
+        } else if (url.pathname.startsWith('/api/file/')) {
+          // Direct API pattern
+          relativePath = url.pathname.replace('/api/file/', '');
+        }
+
+        if (relativePath) {
+          // Prevent default navigation
+          event.preventDefault();
+
+          // Resolve the full API path for the target file using the existing logic
+          // Pass just the relative path, not prefixed with /api/file/
+          const resolvedApiPath = this.resolveRelativeMarkdownPath(relativePath, this.currentFilePath);
+
+          // Construct the proper browser URL that maintains the ingress path
+          // Extract the ingress base from current location
+          const currentUrl = window.location.href;
+          let browserUrl = resolvedApiPath;
+          
+          // If we're in an ingress environment, maintain the ingress base URL
+          if (currentUrl.includes('/api/hassio_ingress/')) {
+            const ingressMatch = currentUrl.match(/(https?:\/\/[^\/]+\/api\/hassio_ingress\/[^\/]+)/);
+            if (ingressMatch) {
+              const ingressBase = ingressMatch[1];
+              browserUrl = `${ingressBase}/${transformUrl(resolvedApiPath)}`;
+            }
+          }
+
+
+          // Push state with proper history entry
+          const state = {
+            filePath: resolvedApiPath,
+            uiPath: browserUrl,
+          };
+          window.history.pushState(state, '', browserUrl);
+
+          // Show the linked file in the current file pane
+          this.showFile(resolvedApiPath);
+        }
       }
-      
-      // Prevent default navigation
-      event.preventDefault();
-      
-      // Update browser URL and history
-      const fileDisplayPath = targetPath.replace('/api/file/', '');
-      const state = { filePath: targetPath };
-      window.history.pushState(state, '', `/files/${fileDisplayPath}`);
-      
-      // Show the linked file in the current file pane
-      this.showFile(targetPath);
     }
   };
+
+  private resolveRelativeMarkdownPath(relativePath: string, currentFilePath: string): string {
+    console.log('[DEBUG] Resolving relative path:', relativePath, 'from current file path:', currentFilePath);
+    // Extract the original path from the transformed URL if needed
+    let originalPath = currentFilePath;
+    if (currentFilePath.startsWith('?route=')) {
+      const routeParam = currentFilePath.substring(7);
+      originalPath = decodeURIComponent(routeParam);
+    }
+
+    // Extract directory from the original path
+    let currentDir = '';
+    let apiPrefix = '/api/file/';
+
+    if (originalPath.startsWith('/api/file/')) {
+      currentDir = originalPath.replace('/api/file/', '').split('/').slice(0, -1).join('/');
+    } else if (originalPath.startsWith('/api/hassio_ingress/')) {
+      // Extract the ingress token and path
+      const ingressMatch = originalPath.match(/\/api\/hassio_ingress\/([^\/]+)\/(.+)/);
+      if (ingressMatch) {
+        apiPrefix = `/api/hassio_ingress/${ingressMatch[1]}/`;
+        currentDir = ingressMatch[2].split('/').slice(0, -1).join('/');
+      }
+    }
+
+    let result = '';
+    if (relativePath.startsWith('./')) {
+      const targetPath = relativePath.substring(2);
+      result = currentDir ? `${apiPrefix}${currentDir}/${targetPath}` : `${apiPrefix}${targetPath}`;
+    } else if (relativePath.startsWith('../')) {
+      const upLevels = (relativePath.match(/\.\.\//g) || []).length;
+      const targetPath = relativePath.replace(/\.\.\//g, '');
+      const pathParts = currentDir.split('/').filter((part) => part.length > 0);
+      const newDir = pathParts.slice(0, Math.max(0, pathParts.length - upLevels)).join('/');
+      result = newDir ? `${apiPrefix}${newDir}/${targetPath}` : `${apiPrefix}${targetPath}`;
+    } else {
+      // Relative to current directory (just filename)
+      result = currentDir ? `${apiPrefix}${currentDir}/${relativePath}` : `${apiPrefix}${relativePath}`;
+    }
+
+    return result;
+  }
 }

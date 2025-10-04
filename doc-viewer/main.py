@@ -1,41 +1,41 @@
-import mimetypes
+import logging
 import os
 import shutil
 import tempfile
 import textwrap
+import urllib.parse
 from fnmatch import fnmatch
 from typing import List
 
-import markdown
 from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import FileResponse
-from fastapi.staticfiles import StaticFiles
+from markdown import markdown
 from pydantic import BaseModel, DirectoryPath, Field
 
-# Check for container environment first, then fall back to local development
-if os.path.exists("/config/docs"):
-    DOCS_ROOT = "/config/docs"
-else:
-    DOCS_ROOT = "/"
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 # excludes (may use * and ? wildcards)
 EXCLUDE_FILES = [".DS_Store"]
 EXCLUDE_FOLDERS = ["__pycache__", ".venv", ".git", ".*cache", "$RECYCLE.BIN"]
+
+DOCS_ROOT = "/config/docs"
+UI_DIR = "/html/ux"
+
+logger.info(f"DOCS_ROOT: {DOCS_ROOT}, UI_DIR: {UI_DIR}")
+
+try:
+    os.makedirs(DOCS_ROOT, exist_ok=True)
+    os.chdir(DOCS_ROOT)
+except Exception as e:
+    logger.error(f"Error accessing documents directory {DOCS_ROOT}: {e}")
 
 
 def dedent_and_convert_to_html(md_string: str) -> str:
     """
     Dedents a markdown string and converts it to HTML.
     """
-    return markdown.markdown(textwrap.dedent(md_string))
-
-
-# set working directory to documents location
-try:
-    os.makedirs(DOCS_ROOT, exist_ok=True)
-    os.chdir(DOCS_ROOT)
-except Exception as e:
-    print(f"Error accessing documents directory {DOCS_ROOT}: {e}")
+    return markdown(textwrap.dedent(md_string))
 
 
 def is_folder_empty(folder_path: str) -> bool:
@@ -98,72 +98,145 @@ class ErrorResponse(BaseModel):
 
 
 app = FastAPI(
-    title="Document Service",
-    description=dedent_and_convert_to_html(
-        """Render files in /config/docs via a REST API."""
-    ),
+    title="FastAPI addon ingress test",
+    description="""Serve documents with FastAPI behind Home Assistant Ingress.""",
     version="1.0.0",
 )
 
 
-# Configure MIME types for proper static file serving
-mimetypes.add_type("text/css", ".css")
-mimetypes.add_type("application/javascript", ".js")
-mimetypes.add_type("application/javascript", ".mjs")
+@app.middleware("http")
+async def route_parser_middleware(request: Request, call_next):
+    """Middleware to handle query parameter routing for ingress compatibility"""
+    route_param = request.query_params.get("route")
 
-# Mount static files for the UI - check for container vs local development
-if os.path.exists("/html/ux"):
-    UI_DIR = "/html/ux"
-else:
-    # For local development, use absolute path to the built UI
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    UI_DIR = os.path.join(script_dir, "html", "ux")
+    # Process route parameter for ingress compatibility
+    if route_param:
+        # Decode the route parameter
+        decoded_route = urllib.parse.unquote(route_param)
 
+        # Store original path and query params
+        request.state.original_path = request.scope["path"]
+        request.state.original_query_params = request.query_params
 
-# Custom static file handler for better MIME type handling
-class CustomStaticFiles(StaticFiles):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        # Create a new request with the decoded route as the path
+        request.scope["path"] = decoded_route
+        request.scope["query_string"] = b""  # Clear query string for internal routing
 
-    def file_response(self, *args, **kwargs):
-        response = super().file_response(*args, **kwargs)
-        # Ensure proper MIME types
-        if hasattr(response, "path"):
-            path = str(response.path)
-            if path.endswith(".css"):
-                response.headers["content-type"] = "text/css"
-            elif path.endswith(".js") or path.endswith(".mjs"):
-                response.headers["content-type"] = "application/javascript"
-        return response
+        logger.info(f"URL transform: {request.scope['path']} -> {decoded_route}")
+
+    return await call_next(request)
 
 
-app.mount("/ui", CustomStaticFiles(directory=UI_DIR), name="static")
+# Main root handler for ingress compatibility
+@app.get("/", dependencies=[])
+async def root_handler(request: Request):
+    """Handle root requests for ingress compatibility"""
+
+    # Get query parameters directly from request
+    route_param = request.query_params.get("route")
+
+    # Handle API routes via 'route' parameter (will be processed by middleware)
+    if route_param:
+        # This will be handled by the middleware that rewrites the path
+        # Should not reach here due to middleware path rewriting
+        raise HTTPException(status_code=404, detail="Route not found")
+
+    # Default: serve main UI
+    index_path = os.path.join(UI_DIR, "index.html")
+
+    if not os.path.exists(index_path):
+        raise HTTPException(status_code=404, detail="UI not found")
+
+    return FileResponse(index_path)
 
 
-# Serve the main UI at root
-@app.get("/")
+"""
+TODO: NOT used? Check!
+# Serve the main UI at /file (backward compatibility)
+@app.get("/file")
 async def read_root():
-    """Serve the main UI application"""
+    ""Serve the main UI application (backward compatibility)""
     return FileResponse(f"{UI_DIR}/index.html")
 
 
+# Keep the static files mount for backward compatibility - MOVED TO END
+# This should be after all other routes to avoid conflicts
+app.mount("/ui", StaticFiles(directory=UI_DIR), name="static")
+"""
+
+
+"""
+TODO: DUPLICATE? check!
 @app.get(
-    "/api/health",
-    response_model=HealthResponse,
-    summary="Health Check",
+    "/api/folder/",
+    response_model=FolderModel,
+    summary="Browse Root Folder Contents",
     description=dedent_and_convert_to_html(
-        "Check if the document service is running and healthy"
+        "Retrieve the contents of the root document repository folder"
     ),
-    tags=["Health"],
+    responses={
+        200: {
+            "description": "Root folder contents successfully retrieved",
+            "model": FolderModel,
+        },
+        404: {"description": "Root folder not found", "model": ErrorResponse},
+    },
+    tags=["Documents"],
 )
-async def health_check(request: Request) -> HealthResponse:
-    """
-    Perform a basic health check of the document service.
+async def get_root_folder() -> FolderModel:
+    "" "
+    Browse the contents of the root folder in the document repository.
+
+    Returns a list of subfolders and files within the root path.
+
+    System files and empty folders are automatically filtered out.
 
     Returns:
-        HealthResponse: Service health status
-    """
-    return HealthResponse(status=f"Docs-addon is healthy, headers: {request.headers}")
+        FolderModel: Root folder structure with subfolders and files
+
+    Raises:
+        HTTPException: 404 if root folder not found
+
+    Example:
+        GET /api/folder/
+        - Returns subfolders and files within the root documents directory
+    "" "
+    print("=== GET_ROOT_FOLDER DEBUG ===")
+    print(f"Current working directory: {os.getcwd()}")
+    print(f"DOCS_ROOT: {DOCS_ROOT}")
+
+    root_path = "."  # Current directory (which should be DOCS_ROOT)
+    print(f"Root path: '{root_path}'")
+    print(f"Path exists: {os.path.exists(root_path)}")
+    print(f"Is directory: {os.path.isdir(root_path)}")
+
+    if not os.path.isdir(root_path):
+        print("ERROR: Root folder not found")
+        raise HTTPException(status_code=404, detail="Root folder not found")
+
+    try:
+        folders = [
+            folder
+            for folder in os.listdir(root_path)
+            if os.path.isdir(os.path.join(root_path, folder))
+            if not any(fnmatch(folder, p) for p in EXCLUDE_FOLDERS)
+            if not is_folder_empty(os.path.join(root_path, folder))
+        ]
+        files = [
+            file
+            for file in os.listdir(root_path)
+            if os.path.isfile(os.path.join(root_path, file))
+            if not any(fnmatch(file, p) for p in EXCLUDE_FILES)
+        ]
+
+        print(f"Found folders: {folders}")
+        print(f"Found files: {files}")
+
+        return FolderModel(path=root_path, folders=sorted(folders), files=sorted(files))
+    except OSError as e:
+        print(f"ERROR: OSError - {str(e)}")
+        raise HTTPException(status_code=404, detail=f"Not found: {str(e)}")
+"""
 
 
 @app.get(
@@ -206,6 +279,7 @@ async def get_folder(path: str) -> FolderModel:
     normalized_path = os.path.normpath(path)
 
     if not os.path.isdir(normalized_path):
+        logger.warning(f"Folder not found: {path}")
         raise HTTPException(status_code=404, detail=f"Folder not found: {path}")
 
     try:
@@ -291,6 +365,20 @@ class UploadResponse(BaseModel):
 async def upload_files(
     files: List[UploadFile] = File(...), target_path: str = Form(default="")
 ) -> UploadResponse:
+    """
+    Upload folder to the document repository with enhanced logging for debugging.
+    """
+    logger.info(f"Upload request received - Number of files: {len(files)}")
+    total_size = 0
+    for i, file in enumerate(files):
+        file_size = 0
+        if hasattr(file, "size") and file.size:
+            file_size = file.size
+        total_size += file_size
+        logger.info(f"File {i + 1}: {file.filename}, size: {file_size} bytes")
+    logger.info(
+        f"Total upload size: {total_size} bytes ({total_size / 1024 / 1024:.2f} MB)"
+    )
     """
     Upload folder to the document repository.
 

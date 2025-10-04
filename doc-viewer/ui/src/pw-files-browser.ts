@@ -1,9 +1,10 @@
-import { LitElement, PropertyValues, css, html } from 'lit';
+import { LitElement, PropertyValues, html, css } from 'lit';
 import { customElement, property, query, state } from 'lit/decorators.js';
-import { get_json, upload_files } from './app/api.ts';
-import { SlTreeItem } from './shoelace-config';
-import { FileRenderer } from './app/files/renderer';
-import { iconForFilename } from './app/files/icons';
+import { get_json, upload_files } from '../api.ts';
+import { SlTreeItem } from './shoelace-config.ts';
+import { FileRenderer } from './app/files/renderer.ts';
+import { iconForFilename } from './app/files/icons.ts';
+import { transformUrl } from './app/transformUrl.ts';
 
 interface FolderModelInterface {
   path: string;
@@ -23,12 +24,6 @@ class FolderModel implements FolderModelInterface {
     this.files = files;
   }
 
-  /** Get the last part of the normalized path (name) 
-  get name(): string {
-    const normalizedPath = this.path.replace(/\\/g, '/').replace(/\/+/g, '/');
-    const parts = normalizedPath.split('/');
-    return parts[parts.length - 1];
-  }*/
 }
 
 @customElement('pw-files-browser')
@@ -231,16 +226,8 @@ export class PwFilesBrowser extends LitElement {
   };
 
   private handlePageShow = (event: PageTransitionEvent) => {
-    console.log('PageShow event in files browser:', {
-      persisted: event.persisted,
-      currentPath: window.location.pathname,
-      selectedFilePath: this.selectedFilePath,
-      hasFileRenderer: !!this.fileRenderer,
-    });
-
     // Handle back/forward cache restoration
     if (event.persisted && this.fileRenderer && this.currentFilePath) {
-      console.log('Syncing file display after pageshow:', this.currentFilePath);
       this.fileRenderer.showFile(this.currentFilePath);
     }
   };
@@ -248,7 +235,6 @@ export class PwFilesBrowser extends LitElement {
   private handlePopState = (event: PopStateEvent) => {
     // Handle back/forward navigation using stored state
     if (event.state?.filePath && this.fileRenderer) {
-      console.log('Showing file after popstate:', event.state.filePath);
       this.fileRenderer.showFile(event.state.filePath);
     }
   };
@@ -300,7 +286,7 @@ export class PwFilesBrowser extends LitElement {
           const filePathSegments = filePath.split('/').map((segment: string) => encodeURIComponent(segment));
           const encodedFilePath = filePathSegments.join('/');
           const dataPath = `/api/file/${encodedFilePath}`;
-          console.log(`pw-files-browser: adding file ${dataPath}`);
+          const transformedDataPath = transformUrl(dataPath);
 
           // Create icon element
           const icon = document.createElement('sl-icon');
@@ -311,7 +297,7 @@ export class PwFilesBrowser extends LitElement {
           treeItem.appendChild(document.createTextNode(fileName));
 
           treeItem.className = 'file-item';
-          treeItem.setAttribute('data-path', dataPath);
+          treeItem.setAttribute('data-path', transformedDataPath);
           treeItem.addEventListener('click', (event) => {
             const target = event.target as HTMLElement;
             const path = target?.getAttribute('data-path');
@@ -326,7 +312,7 @@ export class PwFilesBrowser extends LitElement {
           });
           target.append(treeItem);
           if (fileName === 'index.md') {
-            this.fileRenderer.showFile(dataPath);
+            this.fileRenderer.showFile(transformedDataPath);
           }
         }
         target.lazy = false;
@@ -337,7 +323,7 @@ export class PwFilesBrowser extends LitElement {
       }
     });
 
-    this.fileRenderer.showFile(`/api/file/index.md`);
+    this.fileRenderer.showFile(transformUrl(`/api/file/index.md`));
   }
 
   protected updated(changedProperties: PropertyValues): void {
@@ -345,7 +331,6 @@ export class PwFilesBrowser extends LitElement {
 
     // If selectedFilePath changed, show the new file
     if (changedProperties.has('selectedFilePath') && this.selectedFilePath && this.fileRenderer) {
-      console.log('Showing file due to selectedFilePath change:', this.selectedFilePath);
       this.fileRenderer.showFile(this.selectedFilePath);
     }
   }
@@ -418,7 +403,7 @@ export class PwFilesBrowser extends LitElement {
           <div id="fileContent">Choose file to display ...</div>
           <div id="fileBottomBar">
             ${this.currentFilePath
-              ? html`<a href="${this.currentFilePath}" target="_blank" style="color: var(--sl-color-primary-600); text-decoration: none;"
+              ? html`<a href="${transformUrl(this.currentFilePath)}" target="_blank" style="color: var(--sl-color-primary-600); text-decoration: none;"
                   >Click here to open the file in a new tab</a
                 >`
               : 'Select a file to view'}
