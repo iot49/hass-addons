@@ -58489,12 +58489,22 @@ class FileRenderer {
           if (relativePath) {
             event.preventDefault();
             const resolvedApiPath = this.resolveRelativeMarkdownPath(relativePath, this.currentFilePath);
-            const newUrl = resolvedApiPath;
+            const currentUrl = window.location.href;
+            let browserUrl = resolvedApiPath;
+            if (currentUrl.includes("/api/hassio_ingress/")) {
+              const ingressMatch = currentUrl.match(/(https?:\/\/[^\/]+\/api\/hassio_ingress\/[^\/]+)/);
+              if (ingressMatch) {
+                const ingressBase = ingressMatch[1];
+                browserUrl = `${ingressBase}${transformUrl(resolvedApiPath)}`;
+              }
+            }
+            console.log(`[DEBUG] handleLinkClick - resolvedApiPath: "${resolvedApiPath}"`);
+            console.log(`[DEBUG] handleLinkClick - browserUrl: "${browserUrl}"`);
             const state = {
               filePath: resolvedApiPath,
-              uiPath: newUrl
+              uiPath: browserUrl
             };
-            window.history.pushState(state, "", newUrl);
+            window.history.pushState(state, "", browserUrl);
             this.showFile(resolvedApiPath);
           }
         }

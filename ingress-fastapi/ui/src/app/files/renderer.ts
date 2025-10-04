@@ -267,15 +267,29 @@ handleclick gets the correct href: [DEBUG] href: "https://bv.leaf49.org/api/hass
           // Pass just the relative path, not prefixed with /api/file/
           const resolvedApiPath = this.resolveRelativeMarkdownPath(relativePath, this.currentFilePath);
 
-          // The browser URL should match the pattern used by the application
-          const newUrl = resolvedApiPath;
+          // Construct the proper browser URL that maintains the ingress path
+          // Extract the ingress base from current location
+          const currentUrl = window.location.href;
+          let browserUrl = resolvedApiPath;
+          
+          // If we're in an ingress environment, maintain the ingress base URL
+          if (currentUrl.includes('/api/hassio_ingress/')) {
+            const ingressMatch = currentUrl.match(/(https?:\/\/[^\/]+\/api\/hassio_ingress\/[^\/]+)/);
+            if (ingressMatch) {
+              const ingressBase = ingressMatch[1];
+              browserUrl = `${ingressBase}${transformUrl(resolvedApiPath)}`;
+            }
+          }
+
+          console.log(`[DEBUG] handleLinkClick - resolvedApiPath: "${resolvedApiPath}"`);
+          console.log(`[DEBUG] handleLinkClick - browserUrl: "${browserUrl}"`);
 
           // Push state with proper history entry
           const state = {
             filePath: resolvedApiPath,
-            uiPath: newUrl,
+            uiPath: browserUrl,
           };
-          window.history.pushState(state, '', newUrl);
+          window.history.pushState(state, '', browserUrl);
 
           // Show the linked file in the current file pane
           this.showFile(resolvedApiPath);
