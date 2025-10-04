@@ -6,7 +6,7 @@ import { renderCode } from './renderers/code';
 import { renderJupyterNotebook } from './renderers/ipynb';
 import { renderHtml } from './renderers/html';
 import { renderFallback } from './renderers/fallback';
-import { transformUrl, transformHtmlLinks, handleInternalLinkClick } from '../../transformUrl';
+import { transformUrl, transformHtmlLinks } from '../../transformUrl';
 
 export class FileRenderer {
   private filePane: HTMLDivElement;
@@ -282,57 +282,68 @@ export class FileRenderer {
     });
   }
 
-  private isRelativeMarkdownLink(_href: string, link: HTMLAnchorElement): boolean {
-    const originalHref = link.getAttribute('href') || '';
-    return originalHref.endsWith('.md') &&
-           (originalHref.startsWith('./') ||
-            originalHref.startsWith('../') ||
-            (!originalHref.includes('/') && !originalHref.startsWith('http')));
-  }
 
-  private resolveRelativePath(relativePath: string, currentFilePath: string): string {
-    // Convert relative markdown links to absolute API paths
-    // Handle cases like ./file.md, ../folder/file.md, file.md
-    
-    console.log(`[DEBUG] resolveRelativePath - relativePath: "${relativePath}"`);
-    console.log(`[DEBUG] resolveRelativePath - currentFilePath: "${currentFilePath}"`);
+  private handleLinkClick = (event: Event): void => {
+    const link = event.target as HTMLAnchorElement;
+    if (link && link.href) {
+      console.log(`[DEBUG] handleLinkClick - link.href: "${link.href}"`);
+      console.log(`[DEBUG] handleLinkClick - link.getAttribute('href'): "${link.getAttribute('href')}"`);
+      console.log(`[DEBUG] handleLinkClick - currentFilePath: "${this.currentFilePath}"`);
+      
+      // Check if this is a relative markdown link
+      const originalHref = link.getAttribute('href') || '';
+      if (originalHref.endsWith('.md') &&
+          (originalHref.startsWith('./') || originalHref.startsWith('../') ||
+           (!originalHref.includes('/') && !originalHref.startsWith('http')))) {
+        
+        // Prevent default navigation
+        event.preventDefault();
+        
+        // Resolve relative path based on current file location
+        let resolvedPath = this.resolveRelativeMarkdownPath(originalHref, this.currentFilePath);
+        console.log(`[DEBUG] handleLinkClick - resolved path: "${resolvedPath}"`);
+        
+        // Update browser URL and history
+        const fileDisplayPath = resolvedPath.replace(/^\/api\/[^\/]+\//, '');
+        const state = { filePath: transformUrl(resolvedPath) };
+        window.history.pushState(state, '', `/files/${fileDisplayPath}`);
+        
+        // Show the linked file
+        this.showFile(resolvedPath);
+      }
+    }
+  };
+
+  private resolveRelativeMarkdownPath(relativePath: string, currentFilePath: string): string {
+    console.log(`[DEBUG] resolveRelativeMarkdownPath - relativePath: "${relativePath}"`);
+    console.log(`[DEBUG] resolveRelativeMarkdownPath - currentFilePath: "${currentFilePath}"`);
     
     // Extract the original path from the transformed URL if needed
     let originalPath = currentFilePath;
     if (currentFilePath.startsWith('?route=')) {
-      // Decode the route parameter to get the original path
-      const routeParam = currentFilePath.substring(7); // Remove '?route='
+      const routeParam = currentFilePath.substring(7);
       originalPath = decodeURIComponent(routeParam);
     }
     
-    console.log(`[DEBUG] resolveRelativePath - originalPath: "${originalPath}"`);
+    console.log(`[DEBUG] resolveRelativeMarkdownPath - originalPath: "${originalPath}"`);
     
-    // Extract directory from the original path - handle both /api/file/ and /api/hassio_ingress/ paths
+    // Extract directory from the original path
     let currentDir = '';
+    let apiPrefix = '/api/file/';
+    
     if (originalPath.startsWith('/api/file/')) {
       currentDir = originalPath.replace('/api/file/', '').split('/').slice(0, -1).join('/');
     } else if (originalPath.startsWith('/api/hassio_ingress/')) {
-      currentDir = originalPath.replace('/api/hassio_ingress/', '').split('/').slice(0, -1).join('/');
-    } else {
-      // For other API paths, extract everything after the last /api/ segment
-      const apiMatch = originalPath.match(/\/api\/[^\/]+\/(.+)/);
-      if (apiMatch) {
-        currentDir = apiMatch[1].split('/').slice(0, -1).join('/');
-      }
-    }
-    
-    console.log(`[DEBUG] resolveRelativePath - currentDir: "${currentDir}"`);
-    
-    // Determine the API prefix to use based on the current path
-    let apiPrefix = '/api/file/';
-    if (originalPath.startsWith('/api/hassio_ingress/')) {
-      const ingressMatch = originalPath.match(/\/api\/hassio_ingress\/[^\/]+/);
+      // Extract the ingress token and path
+      const ingressMatch = originalPath.match(/\/api\/hassio_ingress\/([^\/]+)\/(.+)/);
       if (ingressMatch) {
-        apiPrefix = ingressMatch[0] + '/';
+        apiPrefix = `/api/hassio_ingress/${ingressMatch[1]}/`;
+        currentDir = ingressMatch[2].split('/').slice(0, -1).join('/');
       }
     }
     
-    console.log(`[DEBUG] resolveRelativePath - apiPrefix: "${apiPrefix}"`);
+    console.log(`[DEBUG] resolveRelativeMarkdownPath - currentDir: "${currentDir}"`);
+    console.log(`[DEBUG] resolveRelativeMarkdownPath - apiPrefix: "${apiPrefix}"`);
     
     let result = '';
     if (relativePath.startsWith('./')) {
@@ -349,42 +360,7 @@ export class FileRenderer {
       result = currentDir ? `${apiPrefix}${currentDir}/${relativePath}` : `${apiPrefix}${relativePath}`;
     }
     
-    console.log(`[DEBUG] resolveRelativePath - result: "${result}"`);
+    console.log(`[DEBUG] resolveRelativeMarkdownPath - result: "${result}"`);
     return result;
   }
-
-  private handleLinkClick = (event: Event): void => {
-    // Use the centralized link click handler
-    if (handleInternalLinkClick(event, (path) => this.showFile(path))) {
-      return; // Link was handled internally
-    }
-    
-    // Fallback to original logic for compatibility
-    const link = event.target as HTMLAnchorElement;
-    if (link && link.href) {
-      const url = new URL(link.href);
-      let targetPath: string;
-      
-      if (url.pathname.startsWith('/api/file/')) {
-        targetPath = url.pathname;
-      } else if (this.isRelativeMarkdownLink(link.href, link)) {
-        const originalHref = link.getAttribute('href') || '';
-        targetPath = this.resolveRelativePath(originalHref, this.currentFilePath);
-      } else {
-        // External link or non-markdown link - allow default behavior
-        return;
-      }
-      
-      // Prevent default navigation
-      event.preventDefault();
-      
-      // Update browser URL and history
-      const fileDisplayPath = targetPath.replace('/api/file/', '');
-      const state = { filePath: transformUrl(targetPath) };
-      window.history.pushState(state, '', `/files/${fileDisplayPath}`);
-      
-      // Show the linked file in the current file pane
-      this.showFile(targetPath);
-    }
-  };
 }

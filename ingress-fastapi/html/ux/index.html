@@ -5848,32 +5848,6 @@ function transformUrl(url) {
 function isTransformedUrl(url) {
   return url.includes("?route=") || url.includes("&route=");
 }
-function extractOriginalPath(url) {
-  try {
-    const urlObj = new URL(url, window.location.origin);
-    const routeParam = urlObj.searchParams.get("route");
-    return routeParam ? decodeURIComponent(routeParam) : urlObj.pathname;
-  } catch {
-    return url;
-  }
-}
-function isServerPath(path) {
-  return path.startsWith("/api/file/") || path.endsWith(".md") || path.startsWith("/api/") || path.startsWith("/ui/");
-}
-function handleInternalLinkClick(event, showFileCallback) {
-  const link = event.target;
-  if (!link || !link.href) return false;
-  const targetPath = extractOriginalPath(link.href);
-  if (isServerPath(targetPath)) {
-    event.preventDefault();
-    const fileDisplayPath = targetPath.replace("/api/file/", "");
-    const state = { filePath: transformUrl(targetPath) };
-    window.history.pushState(state, "", `/files/${fileDisplayPath}`);
-    showFileCallback(targetPath);
-    return true;
-  }
-  return false;
-}
 function transformHtmlLinks(htmlContent) {
   const parser2 = new DOMParser();
   const doc = parser2.parseFromString(htmlContent, "text/html");
@@ -58518,26 +58492,21 @@ class FileRenderer {
   constructor(filePane) {
     this.currentFilePath = "";
     this.handleLinkClick = (event) => {
-      if (handleInternalLinkClick(event, (path) => this.showFile(path))) {
-        return;
-      }
       const link = event.target;
       if (link && link.href) {
-        const url = new URL(link.href);
-        let targetPath;
-        if (url.pathname.startsWith("/api/file/")) {
-          targetPath = url.pathname;
-        } else if (this.isRelativeMarkdownLink(link.href, link)) {
-          const originalHref = link.getAttribute("href") || "";
-          targetPath = this.resolveRelativePath(originalHref, this.currentFilePath);
-        } else {
-          return;
+        console.log(`[DEBUG] handleLinkClick - link.href: "${link.href}"`);
+        console.log(`[DEBUG] handleLinkClick - link.getAttribute('href'): "${link.getAttribute("href")}"`);
+        console.log(`[DEBUG] handleLinkClick - currentFilePath: "${this.currentFilePath}"`);
+        const originalHref = link.getAttribute("href") || "";
+        if (originalHref.endsWith(".md") && (originalHref.startsWith("./") || originalHref.startsWith("../") || !originalHref.includes("/") && !originalHref.startsWith("http"))) {
+          event.preventDefault();
+          let resolvedPath = this.resolveRelativeMarkdownPath(originalHref, this.currentFilePath);
+          console.log(`[DEBUG] handleLinkClick - resolved path: "${resolvedPath}"`);
+          const fileDisplayPath = resolvedPath.replace(/^\/api\/[^\/]+\//, "");
+          const state = { filePath: transformUrl(resolvedPath) };
+          window.history.pushState(state, "", `/files/${fileDisplayPath}`);
+          this.showFile(resolvedPath);
         }
-        event.preventDefault();
-        const fileDisplayPath = targetPath.replace("/api/file/", "");
-        const state = { filePath: transformUrl(targetPath) };
-        window.history.pushState(state, "", `/files/${fileDisplayPath}`);
-        this.showFile(targetPath);
       }
     };
     this.filePane = filePane;
@@ -58756,39 +58725,28 @@ class FileRenderer {
       subtree: true
     });
   }
-  isRelativeMarkdownLink(_href, link) {
-    const originalHref = link.getAttribute("href") || "";
-    return originalHref.endsWith(".md") && (originalHref.startsWith("./") || originalHref.startsWith("../") || !originalHref.includes("/") && !originalHref.startsWith("http"));
-  }
-  resolveRelativePath(relativePath, currentFilePath) {
-    console.log(`[DEBUG] resolveRelativePath - relativePath: "${relativePath}"`);
-    console.log(`[DEBUG] resolveRelativePath - currentFilePath: "${currentFilePath}"`);
+  resolveRelativeMarkdownPath(relativePath, currentFilePath) {
+    console.log(`[DEBUG] resolveRelativeMarkdownPath - relativePath: "${relativePath}"`);
+    console.log(`[DEBUG] resolveRelativeMarkdownPath - currentFilePath: "${currentFilePath}"`);
     let originalPath = currentFilePath;
     if (currentFilePath.startsWith("?route=")) {
       const routeParam = currentFilePath.substring(7);
       originalPath = decodeURIComponent(routeParam);
     }
-    console.log(`[DEBUG] resolveRelativePath - originalPath: "${originalPath}"`);
+    console.log(`[DEBUG] resolveRelativeMarkdownPath - originalPath: "${originalPath}"`);
     let currentDir = "";
+    let apiPrefix = "/api/file/";
     if (originalPath.startsWith("/api/file/")) {
       currentDir = originalPath.replace("/api/file/", "").split("/").slice(0, -1).join("/");
     } else if (originalPath.startsWith("/api/hassio_ingress/")) {
-      currentDir = originalPath.replace("/api/hassio_ingress/", "").split("/").slice(0, -1).join("/");
-    } else {
-      const apiMatch = originalPath.match(/\/api\/[^\/]+\/(.+)/);
-      if (apiMatch) {
-        currentDir = apiMatch[1].split("/").slice(0, -1).join("/");
-      }
-    }
-    console.log(`[DEBUG] resolveRelativePath - currentDir: "${currentDir}"`);
-    let apiPrefix = "/api/file/";
-    if (originalPath.startsWith("/api/hassio_ingress/")) {
-      const ingressMatch = originalPath.match(/\/api\/hassio_ingress\/[^\/]+/);
+      const ingressMatch = originalPath.match(/\/api\/hassio_ingress\/([^\/]+)\/(.+)/);
       if (ingressMatch) {
-        apiPrefix = ingressMatch[0] + "/";
+        apiPrefix = `/api/hassio_ingress/${ingressMatch[1]}/`;
+        currentDir = ingressMatch[2].split("/").slice(0, -1).join("/");
       }
     }
-    console.log(`[DEBUG] resolveRelativePath - apiPrefix: "${apiPrefix}"`);
+    console.log(`[DEBUG] resolveRelativeMarkdownPath - currentDir: "${currentDir}"`);
+    console.log(`[DEBUG] resolveRelativeMarkdownPath - apiPrefix: "${apiPrefix}"`);
     let result = "";
     if (relativePath.startsWith("./")) {
       const targetPath = relativePath.substring(2);
@@ -58802,7 +58760,7 @@ class FileRenderer {
     } else {
       result = currentDir ? `${apiPrefix}${currentDir}/${relativePath}` : `${apiPrefix}${relativePath}`;
     }
-    console.log(`[DEBUG] resolveRelativePath - result: "${result}"`);
+    console.log(`[DEBUG] resolveRelativeMarkdownPath - result: "${result}"`);
     return result;
   }
 }
