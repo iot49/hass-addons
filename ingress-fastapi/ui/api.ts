@@ -7,7 +7,6 @@ import { transformUrl } from './src/transformUrl';
 export async function get_json(uri: string) {
   try {
     const transformedUri = transformUrl(uri);
-    console.log(`get_json ${uri} -> ${transformedUri} window.location.href=${window.location.href}`);
     let response: Response;
     try {
       response = await fetch(transformedUri, { method: 'GET', credentials: 'include', mode: 'cors' });
@@ -26,18 +25,15 @@ export async function get_json(uri: string) {
 export async function get_text(uri: string) {
   try {
     const transformedUri = transformUrl(uri);
-    const resolvedUrl = new URL(transformedUri, window.location.href);
-    console.log(`get_text ${uri} -> ${transformedUri} (resolved to ${resolvedUrl.href})`);
-    
     let response: Response;
     try {
       response = await fetch(transformedUri, { method: 'GET', credentials: 'include', mode: 'cors' });
     } catch (error) {
-      console.error(`Fetch failed for ${transformedUri} (resolved to ${resolvedUrl.href})`, error);
+      console.error(`Fetch failed for ${transformedUri}`, error);
       throw new Error(`Failed fetching ${transformedUri}`, { cause: error });
     }
     if (!response.ok) {
-      console.error(`HTTP error! status: ${response.status} for ${transformedUri} (resolved to ${resolvedUrl.href})`);
+      console.error(`HTTP error! status: ${response.status} for ${transformedUri}`);
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     return await response.text();

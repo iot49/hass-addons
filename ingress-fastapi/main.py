@@ -109,8 +109,6 @@ async def route_parser_middleware(request: Request, call_next):
     """Middleware to handle query parameter routing for ingress compatibility"""
     route_param = request.query_params.get("route")
 
-    print(f"main.py got request: {request.url}")
-
     # Process route parameter for ingress compatibility
     if route_param:
         # Decode the route parameter

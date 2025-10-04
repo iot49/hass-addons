@@ -25,7 +25,7 @@ export function transformUrl(url: string): string {
   } else {
     // Relative URL - always transform
     const transformed = `?route=${encodeURIComponent(url)}`;
-    console.log(`URL transform (relative): "${url}"`);
+    // console.log(`URL transform (relative): "${url}"`);
     return transformed;
   }
 }
