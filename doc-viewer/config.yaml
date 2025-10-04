@@ -1,7 +1,7 @@
-name: "Ingress FastAPI"
+name: "Documentation Viewer"
 description: >-
   Serve documentation in /config/docs.
-version: "1.0.0"
+version: "1.0.1"
 slug: "doc-viewer"
 init: false
 arch:
