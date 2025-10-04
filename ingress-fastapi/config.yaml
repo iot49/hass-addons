@@ -1,7 +1,7 @@
 name: "Ingress FastAPI"
 description: >-
   Test Ingress with FastAPI App.
-version: "1.2.46"
+version: "1.2.47"
 slug: "ingress-fastapi"
 init: false
 arch:
@@ -12,8 +12,13 @@ arch:
   - i386
 startup: services
 
-# https://github.com/home-assistant/supervisor/issues/1044
+# authenticated by Home Assistant, uploads fail
 ingress: true
+
+# Not authenticated, but uplodoads work
+webui: "http://[HOST]:[PORT:8000]"
+ports:
+  8000/tcp: 8000
 
 # mount /config/doc folder into container
 map:
