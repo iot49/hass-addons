@@ -366,6 +366,20 @@ async def upload_files(
     files: List[UploadFile] = File(...), target_path: str = Form(default="")
 ) -> UploadResponse:
     """
+    Upload folder to the document repository with enhanced logging for debugging.
+    """
+    logger.info(f"Upload request received - Number of files: {len(files)}")
+    total_size = 0
+    for i, file in enumerate(files):
+        file_size = 0
+        if hasattr(file, "size") and file.size:
+            file_size = file.size
+        total_size += file_size
+        logger.info(f"File {i + 1}: {file.filename}, size: {file_size} bytes")
+    logger.info(
+        f"Total upload size: {total_size} bytes ({total_size / 1024 / 1024:.2f} MB)"
+    )
+    """
     Upload folder to the document repository.
 
     This endpoint accepts files from a folder upload and copies the entire folder
