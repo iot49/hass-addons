@@ -58640,30 +58640,20 @@ class FileRenderer {
     });
   }
   observeShadowDOMChanges(zeroMd) {
-    const shadowRoot = zeroMd.shadowRoot;
-    if (!shadowRoot) return;
-    const observer = new MutationObserver((mutations) => {
-      let shouldReattach = false;
-      mutations.forEach((mutation) => {
-        if (mutation.type === "childList" && mutation.addedNodes.length > 0) {
-          mutation.addedNodes.forEach((node) => {
-            if (node.nodeType === Node.ELEMENT_NODE) {
-              const element = node;
-              if (element.tagName === "A" || element.querySelectorAll("a[href]").length > 0) {
-                shouldReattach = true;
-              }
-            }
-          });
-        }
-      });
-      if (shouldReattach) {
-        console.log("Shadow DOM changed, reattaching link listeners");
+    console.log(`[DEBUG] observeShadowDOMChanges - setting up observer`);
+    const observer = new MutationObserver((_mutations) => {
+      console.log(`[DEBUG] observeShadowDOMChanges - mutation detected ${_mutations.length} mutations`);
+      if (zeroMd.shadowRoot) {
+        console.log(`[DEBUG] observeShadowDOMChanges - shadowRoot now available, attaching listeners`);
         this.attachLinkListeners(zeroMd);
+        observer.disconnect();
       }
     });
-    observer.observe(shadowRoot, {
+    observer.observe(zeroMd, {
       childList: true,
-      subtree: true
+      subtree: true,
+      attributes: true,
+      attributeOldValue: true
     });
   }
   resolveRelativeMarkdownPath(relativePath, currentFilePath) {

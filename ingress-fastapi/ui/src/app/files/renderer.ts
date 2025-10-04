@@ -200,36 +200,26 @@ export class FileRenderer {
   }
 
   private observeShadowDOMChanges(zeroMd: Element): void {
-    const shadowRoot = zeroMd.shadowRoot;
-    if (!shadowRoot) return;
-
-    // Create a mutation observer to watch for changes in the shadow DOM
-    const observer = new MutationObserver((mutations) => {
-      let shouldReattach = false;
-      mutations.forEach((mutation) => {
-        if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
-          // Check if any added nodes contain links
-          mutation.addedNodes.forEach((node) => {
-            if (node.nodeType === Node.ELEMENT_NODE) {
-              const element = node as Element;
-              if (element.tagName === 'A' || element.querySelectorAll('a[href]').length > 0) {
-                shouldReattach = true;
-              }
-            }
-          });
-        }
-      });
+    console.log(`[DEBUG] observeShadowDOMChanges - setting up observer`);
+    
+    // Create a mutation observer to watch for changes in the zero-md element itself
+    const observer = new MutationObserver((_mutations) => {
+      console.log(`[DEBUG] observeShadowDOMChanges - mutation detected ${_mutations.length} mutations`);
       
-      if (shouldReattach) {
-        console.log('Shadow DOM changed, reattaching link listeners');
+      // Check if shadow DOM was created
+      if (zeroMd.shadowRoot) {
+        console.log(`[DEBUG] observeShadowDOMChanges - shadowRoot now available, attaching listeners`);
         this.attachLinkListeners(zeroMd);
+        observer.disconnect(); // Stop observing once we have shadow DOM
       }
     });
 
-    // Start observing
-    observer.observe(shadowRoot, {
+    // Start observing the zero-md element for shadow DOM creation
+    observer.observe(zeroMd, {
       childList: true,
-      subtree: true
+      subtree: true,
+      attributes: true,
+      attributeOldValue: true
     });
   }
 
