@@ -5991,19 +5991,7 @@ function renderMarkdown(filePane, path, renderer) {
     </div>
   `;
   setFileContent(filePane, createFileWrapper(contentHtml, path));
-  setTimeout(() => {
-    const zeroMdElement = filePane.querySelector("zero-md");
-    if (zeroMdElement && zeroMdElement.shadowRoot) {
-      const baseElement = zeroMdElement.shadowRoot.querySelector("base");
-      if (baseElement) {
-        baseElement.remove();
-      }
-      const newBase = document.createElement("base");
-      newBase.href = window.location.origin + "/";
-      zeroMdElement.shadowRoot.appendChild(newBase);
-    }
-    renderer.setupLinkClickHandler();
-  }, 100);
+  renderer.setupLinkClickHandler();
 }
 function renderImage(filePane, path, fileName) {
   const contentHtml = `
@@ -58475,19 +58463,22 @@ class FileRenderer {
     this.currentFilePath = "";
     this.handleLinkClick = (event) => {
       const link = event.target;
+      console.log(`[DEBUG] handleLinkClick ${link} - href: "${link == null ? void 0 : link.href}"`);
       if (link && link.href) {
-        console.log(`[DEBUG] handleLinkClick - link.href: "${link.href}"`);
-        console.log(`[DEBUG] handleLinkClick - link.getAttribute('href'): "${link.getAttribute("href")}"`);
-        console.log(`[DEBUG] handleLinkClick - currentFilePath: "${this.currentFilePath}"`);
-        const originalHref = link.getAttribute("href") || "";
-        if (originalHref.endsWith(".md") && (originalHref.startsWith("./") || originalHref.startsWith("../") || !originalHref.includes("/") && !originalHref.startsWith("http"))) {
+        const url = new URL(link.href);
+        if (url.pathname.startsWith("/files/api/file/")) {
           event.preventDefault();
-          let resolvedPath = this.resolveRelativeMarkdownPath(originalHref, this.currentFilePath);
-          console.log(`[DEBUG] handleLinkClick - resolved path: "${resolvedPath}"`);
-          const fileDisplayPath = resolvedPath.replace(/^\/api\/[^\/]+\//, "");
-          const state = { filePath: transformUrl(resolvedPath) };
-          window.history.pushState(state, "", `/files/${fileDisplayPath}`);
-          this.showFile(resolvedPath);
+          const filePath = url.pathname.replace("/files/api/file", "");
+          const newUrl = this.resolveRelativeMarkdownPath(filePath, this.currentFilePath);
+          console.log(`[DEBUG] handleLinkClick - filePath: "${filePath}"`);
+          console.log(`[DEBUG] handleLinkClick - currentFilePath: "${this.currentFilePath}"`);
+          console.log(`[DEBUG] handleLinkClick - newUrl: "${newUrl}"`);
+          const state = {
+            filePath: url.pathname,
+            uiPath: newUrl
+          };
+          window.history.pushState(state, "", newUrl);
+          this.showFile(url.pathname);
         }
       }
     };
@@ -58606,54 +58597,52 @@ class FileRenderer {
     });
   }
   setupLinkClickHandler() {
-    console.log(`[DEBUG] setupLinkClickHandler - called`);
     const zeroMdElements = this.filePane.querySelectorAll("zero-md");
-    console.log(`[DEBUG] setupLinkClickHandler - found ${zeroMdElements.length} zero-md elements`);
     zeroMdElements.forEach((zeroMd) => {
-      console.log(`[DEBUG] setupLinkClickHandler - setting up listeners for zero-md element`);
       zeroMd.addEventListener("zero-md-rendered", () => {
-        console.log(`[DEBUG] setupLinkClickHandler - zero-md-rendered event fired`);
         this.attachLinkListeners(zeroMd);
       });
       if (zeroMd.shadowRoot) {
-        console.log(`[DEBUG] setupLinkClickHandler - shadowRoot already exists, attaching listeners immediately`);
         this.attachLinkListeners(zeroMd);
-      } else {
-        console.log(`[DEBUG] setupLinkClickHandler - shadowRoot does not exist yet, waiting for event`);
       }
       this.observeShadowDOMChanges(zeroMd);
     });
   }
   attachLinkListeners(zeroMd) {
     const shadowRoot = zeroMd.shadowRoot;
-    if (!shadowRoot) {
-      console.log(`[DEBUG] attachLinkListeners - no shadowRoot found`);
-      return;
-    }
+    if (!shadowRoot) return;
     const links = shadowRoot.querySelectorAll("a[href]");
-    console.log(`[DEBUG] attachLinkListeners - found ${links.length} links in shadow DOM`);
     links.forEach((link) => {
       const anchorLink = link;
-      console.log(`[DEBUG] attachLinkListeners - attaching listener to link: "${anchorLink.getAttribute("href")}"`);
       anchorLink.removeEventListener("click", this.handleLinkClick);
       anchorLink.addEventListener("click", this.handleLinkClick);
     });
   }
   observeShadowDOMChanges(zeroMd) {
-    console.log(`[DEBUG] observeShadowDOMChanges - setting up observer`);
-    const observer = new MutationObserver((_mutations) => {
-      console.log(`[DEBUG] observeShadowDOMChanges - mutation detected ${_mutations.length} mutations`);
-      if (zeroMd.shadowRoot) {
-        console.log(`[DEBUG] observeShadowDOMChanges - shadowRoot now available, attaching listeners`);
+    const shadowRoot = zeroMd.shadowRoot;
+    if (!shadowRoot) return;
+    const observer = new MutationObserver((mutations) => {
+      let shouldReattach = false;
+      mutations.forEach((mutation) => {
+        if (mutation.type === "childList" && mutation.addedNodes.length > 0) {
+          mutation.addedNodes.forEach((node) => {
+            if (node.nodeType === Node.ELEMENT_NODE) {
+              const element = node;
+              if (element.tagName === "A" || element.querySelectorAll("a[href]").length > 0) {
+                shouldReattach = true;
+              }
+            }
+          });
+        }
+      });
+      if (shouldReattach) {
+        console.log("Shadow DOM changed, reattaching link listeners");
         this.attachLinkListeners(zeroMd);
-        observer.disconnect();
       }
     });
-    observer.observe(zeroMd, {
+    observer.observe(shadowRoot, {
       childList: true,
-      subtree: true,
-      attributes: true,
-      attributeOldValue: true
+      subtree: true
     });
   }
   resolveRelativeMarkdownPath(relativePath, currentFilePath) {

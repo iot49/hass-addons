@@ -149,30 +149,19 @@ export class FileRenderer {
     });
   }
 
-
-
   setupLinkClickHandler(): void {
-    console.log(`[DEBUG] setupLinkClickHandler - called`);
     const zeroMdElements = this.filePane.querySelectorAll('zero-md');
-    console.log(`[DEBUG] setupLinkClickHandler - found ${zeroMdElements.length} zero-md elements`);
-    
     zeroMdElements.forEach((zeroMd) => {
-      console.log(`[DEBUG] setupLinkClickHandler - setting up listeners for zero-md element`);
-      
       // Listen for the zero-md-rendered event to ensure content is loaded
       zeroMd.addEventListener('zero-md-rendered', () => {
-        console.log(`[DEBUG] setupLinkClickHandler - zero-md-rendered event fired`);
         this.attachLinkListeners(zeroMd);
       });
-      
+
       // Also check if it's already rendered
       if (zeroMd.shadowRoot) {
-        console.log(`[DEBUG] setupLinkClickHandler - shadowRoot already exists, attaching listeners immediately`);
         this.attachLinkListeners(zeroMd);
-      } else {
-        console.log(`[DEBUG] setupLinkClickHandler - shadowRoot does not exist yet, waiting for event`);
       }
-      
+
       // Add a mutation observer to watch for changes in the shadow DOM
       this.observeShadowDOMChanges(zeroMd);
     });
@@ -180,77 +169,85 @@ export class FileRenderer {
 
   private attachLinkListeners(zeroMd: Element): void {
     const shadowRoot = zeroMd.shadowRoot;
-    if (!shadowRoot) {
-      console.log(`[DEBUG] attachLinkListeners - no shadowRoot found`);
-      return;
-    }
+    if (!shadowRoot) return;
 
     // Find all links in the shadow DOM
     const links = shadowRoot.querySelectorAll('a[href]');
-    console.log(`[DEBUG] attachLinkListeners - found ${links.length} links in shadow DOM`);
-    
+    // console.log(`Found ${links.length} links in zero-md shadow DOM`);
+
     links.forEach((link) => {
       const anchorLink = link as HTMLAnchorElement;
-      console.log(`[DEBUG] attachLinkListeners - attaching listener to link: "${anchorLink.getAttribute('href')}"`);
       // Remove existing listeners to avoid duplicates
       anchorLink.removeEventListener('click', this.handleLinkClick);
       // Add click listener
       anchorLink.addEventListener('click', this.handleLinkClick);
+      // console.log('Attached click listener to link:', anchorLink.href);
     });
   }
 
   private observeShadowDOMChanges(zeroMd: Element): void {
-    console.log(`[DEBUG] observeShadowDOMChanges - setting up observer`);
-    
-    // Create a mutation observer to watch for changes in the zero-md element itself
-    const observer = new MutationObserver((_mutations) => {
-      console.log(`[DEBUG] observeShadowDOMChanges - mutation detected ${_mutations.length} mutations`);
-      
-      // Check if shadow DOM was created
-      if (zeroMd.shadowRoot) {
-        console.log(`[DEBUG] observeShadowDOMChanges - shadowRoot now available, attaching listeners`);
+    const shadowRoot = zeroMd.shadowRoot;
+    if (!shadowRoot) return;
+
+    // Create a mutation observer to watch for changes in the shadow DOM
+    const observer = new MutationObserver((mutations) => {
+      let shouldReattach = false;
+      mutations.forEach((mutation) => {
+        if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+          // Check if any added nodes contain links
+          mutation.addedNodes.forEach((node) => {
+            if (node.nodeType === Node.ELEMENT_NODE) {
+              const element = node as Element;
+              if (element.tagName === 'A' || element.querySelectorAll('a[href]').length > 0) {
+                shouldReattach = true;
+              }
+            }
+          });
+        }
+      });
+
+      if (shouldReattach) {
+        console.log('Shadow DOM changed, reattaching link listeners');
         this.attachLinkListeners(zeroMd);
-        observer.disconnect(); // Stop observing once we have shadow DOM
       }
     });
 
-    // Start observing the zero-md element for shadow DOM creation
-    observer.observe(zeroMd, {
+    // Start observing
+    observer.observe(shadowRoot, {
       childList: true,
       subtree: true,
-      attributes: true,
-      attributeOldValue: true
     });
   }
 
-
   private handleLinkClick = (event: Event): void => {
     const link = event.target as HTMLAnchorElement;
+    console.log(`[DEBUG] handleLinkClick ${link} - href: "${link?.href}"`);
     if (link && link.href) {
-      console.log(`[DEBUG] handleLinkClick - link.href: "${link.href}"`);
-      console.log(`[DEBUG] handleLinkClick - link.getAttribute('href'): "${link.getAttribute('href')}"`);
-      console.log(`[DEBUG] handleLinkClick - currentFilePath: "${this.currentFilePath}"`);
-      
-      // Check if this is a relative markdown link
-      const originalHref = link.getAttribute('href') || '';
-      if (originalHref.endsWith('.md') &&
-          (originalHref.startsWith('./') || originalHref.startsWith('../') ||
-           (!originalHref.includes('/') && !originalHref.startsWith('http')))) {
-        
+      // Check if this is a link to a document file that we should handle internally
+      const url = new URL(link.href);
+      if (url.pathname.startsWith('/files/api/file/')) {
         // Prevent default navigation
         event.preventDefault();
-        
-        // Resolve relative path based on current file location
-        let resolvedPath = this.resolveRelativeMarkdownPath(originalHref, this.currentFilePath);
-        console.log(`[DEBUG] handleLinkClick - resolved path: "${resolvedPath}"`);
-        
-        // Update browser URL and history
-        const fileDisplayPath = resolvedPath.replace(/^\/api\/[^\/]+\//, '');
-        const state = { filePath: transformUrl(resolvedPath) };
-        window.history.pushState(state, '', `/files/${fileDisplayPath}`);
-        
-        // Show the linked file
-        this.showFile(resolvedPath);
+
+        // Extract the file path from the API path (remove /files/api/file prefix)
+        const filePath = url.pathname.replace('/files/api/file', '');
+        // Update the browser URL to use the UI route format with path parameter
+        // const newUrl = `/ui/files${filePath}`;
+        const newUrl = this.resolveRelativeMarkdownPath(filePath, this.currentFilePath);
+
+        console.log(`[DEBUG] handleLinkClick - filePath: "${filePath}"`);
+        console.log(`[DEBUG] handleLinkClick - currentFilePath: "${this.currentFilePath}"`);
+        console.log(`[DEBUG] handleLinkClick - newUrl: "${newUrl}"`);
+
+        // Push state with proper history entry
+        const state = {
+          filePath: url.pathname,
+          uiPath: newUrl,
+        };
+        window.history.pushState(state, '', newUrl);
+
+        // Show the linked file in the current file pane
+        this.showFile(url.pathname);
       }
     }
   };
@@ -258,20 +255,20 @@ export class FileRenderer {
   private resolveRelativeMarkdownPath(relativePath: string, currentFilePath: string): string {
     console.log(`[DEBUG] resolveRelativeMarkdownPath - relativePath: "${relativePath}"`);
     console.log(`[DEBUG] resolveRelativeMarkdownPath - currentFilePath: "${currentFilePath}"`);
-    
+
     // Extract the original path from the transformed URL if needed
     let originalPath = currentFilePath;
     if (currentFilePath.startsWith('?route=')) {
       const routeParam = currentFilePath.substring(7);
       originalPath = decodeURIComponent(routeParam);
     }
-    
+
     console.log(`[DEBUG] resolveRelativeMarkdownPath - originalPath: "${originalPath}"`);
-    
+
     // Extract directory from the original path
     let currentDir = '';
     let apiPrefix = '/api/file/';
-    
+
     if (originalPath.startsWith('/api/file/')) {
       currentDir = originalPath.replace('/api/file/', '').split('/').slice(0, -1).join('/');
     } else if (originalPath.startsWith('/api/hassio_ingress/')) {
@@ -282,10 +279,10 @@ export class FileRenderer {
         currentDir = ingressMatch[2].split('/').slice(0, -1).join('/');
       }
     }
-    
+
     console.log(`[DEBUG] resolveRelativeMarkdownPath - currentDir: "${currentDir}"`);
     console.log(`[DEBUG] resolveRelativeMarkdownPath - apiPrefix: "${apiPrefix}"`);
-    
+
     let result = '';
     if (relativePath.startsWith('./')) {
       const targetPath = relativePath.substring(2);
@@ -293,14 +290,14 @@ export class FileRenderer {
     } else if (relativePath.startsWith('../')) {
       const upLevels = (relativePath.match(/\.\.\//g) || []).length;
       const targetPath = relativePath.replace(/\.\.\//g, '');
-      const pathParts = currentDir.split('/').filter(part => part.length > 0);
+      const pathParts = currentDir.split('/').filter((part) => part.length > 0);
       const newDir = pathParts.slice(0, Math.max(0, pathParts.length - upLevels)).join('/');
       result = newDir ? `${apiPrefix}${newDir}/${targetPath}` : `${apiPrefix}${targetPath}`;
     } else {
       // Relative to current directory (just filename)
       result = currentDir ? `${apiPrefix}${currentDir}/${relativePath}` : `${apiPrefix}${relativePath}`;
     }
-    
+
     console.log(`[DEBUG] resolveRelativeMarkdownPath - result: "${result}"`);
     return result;
   }

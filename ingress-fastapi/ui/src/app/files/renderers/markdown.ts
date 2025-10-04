@@ -30,23 +30,6 @@ export function renderMarkdown(
   
   setFileContent(filePane, createFileWrapper(contentHtml, path));
   
-  // Wait for zero-md to load, then override its link handling
-  setTimeout(() => {
-    const zeroMdElement = filePane.querySelector('zero-md');
-    if (zeroMdElement && zeroMdElement.shadowRoot) {
-      // Disable zero-md's internal link resolution by overriding its base href
-      const baseElement = zeroMdElement.shadowRoot.querySelector('base');
-      if (baseElement) {
-        baseElement.remove();
-      }
-      
-      // Add a base element that points to current origin to prevent relative resolution
-      const newBase = document.createElement('base');
-      newBase.href = window.location.origin + '/';
-      zeroMdElement.shadowRoot.appendChild(newBase);
-    }
-    
-    // Set up our custom link handlers
-    renderer.setupLinkClickHandler();
-  }, 100);
+  // Add link click handler after zero-md is rendered
+  renderer.setupLinkClickHandler();
 }
