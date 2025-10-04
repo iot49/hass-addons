@@ -184,7 +184,7 @@ export class FileRenderer {
       anchorLink.removeEventListener('click', this.handleLinkClick);
       // Add click listener
       anchorLink.addEventListener('click', this.handleLinkClick);
-      console.log('Attached click listener to link:', anchorLink.href);
+      // console.log('Attached click listener to link:', anchorLink.href);
     });
   }
 

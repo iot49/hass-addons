@@ -58620,7 +58620,6 @@ class FileRenderer {
       const anchorLink = link;
       anchorLink.removeEventListener("click", this.handleLinkClick);
       anchorLink.addEventListener("click", this.handleLinkClick);
-      console.log("Attached click listener to link:", anchorLink.href);
     });
   }
   observeShadowDOMChanges(zeroMd) {
