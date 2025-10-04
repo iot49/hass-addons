@@ -151,8 +151,9 @@ export class FileRenderer {
 
   setupLinkClickHandler(): void {
     const zeroMdElements = this.filePane.querySelectorAll('zero-md');
-    console.log(`[DEBUG] setupLinkClickHandler - found ${zeroMdElements} zero-md elements`);
+    console.log(`[DEBUG] setupLinkClickHandler - found ${zeroMdElements.length} zero-md elements`);
     zeroMdElements.forEach((zeroMd) => {
+      console.log(`[DEBUG] setupLinkClickHandler - processing zero-md element: ${zeroMd} shadowRoot: ${zeroMd.shadowRoot}`);
       // Listen for the zero-md-rendered event to ensure content is loaded
       zeroMd.addEventListener('zero-md-rendered', () => {
         this.attachLinkListeners(zeroMd);

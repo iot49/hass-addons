@@ -24,7 +24,7 @@ export function renderMarkdown(
 ): void {
   const contentHtml = `
     <div style="flex: 1; min-height: 0; overflow: auto;">
-      <zero-md src="${path}" no-shadow></zero-md>
+      <zero-md src="${path}"></zero-md>
     </div>
   `;
   
