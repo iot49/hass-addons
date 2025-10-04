@@ -17,15 +17,14 @@ COPY main.py .
 COPY html/ /html/
 
 EXPOSE 8000
-EXPOSE 8099
 
 
 CMD ["./bin/python3", "-m", "gunicorn", "main:app", \
-        "--bind", "172.30.0.0:8099", "--bind", "10.0.0.0:8000", "--bind", "192.168.0.0:8000", \
+        "--bind", "0.0.0.0:8000", \
         "--workers", "2", "--worker-class", "uvicorn.workers.UvicornWorker", \
         "--preload", "--log-level", "warning"]
 
 # CMD ["./bin/python3", "-m", "gunicorn", "main:app", \
-#         "--bind", "172.30.0.0:8099" "--bind", "10.0.0.0:8000", "--bind", "192.168.0.0:8000", \
+#         "--bind", "172.30.0.0:8099", "--bind", "10.0.0.0:8000", "--bind", "192.168.0.0:8000", \
 #         "--workers", "2", "--worker-class", "uvicorn.workers.UvicornWorker", \
 #         "--preload", "--log-level", "warning"]
